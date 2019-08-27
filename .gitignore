@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Workspace
+.vscode/launch.json
+.vscode/tasks.json
