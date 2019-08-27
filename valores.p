@@ -4,7 +4,7 @@ unset label
 set xtic auto
 set ytic auto
 
-set title "Primer plot"
+set title "Euler"
 set xlabel "x"
 set ylabel "f(x)"
 
