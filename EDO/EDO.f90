@@ -81,7 +81,7 @@ program principal
     open(2, file='datos.dat')
     do i = 1, repeticiones
         write(2,'(2F15.10)') x, y
-        y = rkf(x, y, h)
+        y = eulerSimple(x, y, h)
         x = x + h
     end do
     close(2)
