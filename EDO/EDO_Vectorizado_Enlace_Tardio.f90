@@ -23,6 +23,9 @@ module EDOs
         end function metodo
     end interface
 
+    interface iterar
+        module procedure iterarVeces, iterarValorFinal
+    end interface
 contains
 
     function eulerSimple(v, h, fp)
@@ -83,7 +86,7 @@ contains
         e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
     end function rkf
 
-    subroutine iterar(met, fp, vinicial, h, rep)
+    subroutine iterarVeces(met, fp, vinicial, h, rep)
         intent(in) :: vinicial, h, rep
         procedure(metodo) :: met
         procedure(derivada) :: fp
@@ -99,8 +102,25 @@ contains
         end do
         close(2)
         call system('gnuplot -persist valores.p')
-    end subroutine iterar
+    end subroutine iterarVeces
     
+    subroutine iterarValorFinal(met, fp, vinicial, h, xf)
+        intent(in) :: vinicial, h, xf
+        procedure(metodo) :: met
+        procedure(derivada) :: fp
+        real(8) h, xf, vinicial(0:), v(0:size(vinicial - 1))
+
+        open(2, file='datos.dat')
+        v = vinicial
+        write(2, *) v
+        do while (v(0) <= xf)
+            v = met(v, h, fp)
+            write(2, *) v
+        end do
+        close(2)
+        call system('gnuplot -persist valores.p')
+    end subroutine iterarValorFinal
+
 end module EDOs
 
 program principal
@@ -111,17 +131,18 @@ program principal
     integer(4), parameter :: cant_ec = 1
 
     integer(4) repeticiones
-    real(8) v(0:cant_ec), h
+    real(8) v(0:cant_ec), h, xf
 
     repeticiones = 15
-    h = 1
-    v(0) = -5
-    v(1) = 25
+    h = 1.
+    v(0) = -5.
+    v(1) = 25.
+    xf = 25.
     call iterar(eulerSimple, fp, v, h, repeticiones)
     call iterar(eulerModificado, fp, v, h, repeticiones)
     call iterar(eulerMejorado, fp, v, h, repeticiones)
     call iterar(rk, fp, v, h, repeticiones)
-    call iterar(rkf, fp, v, h, repeticiones)
+    call iterar(rkf, fp, v, h, xf)
 
 contains
 
