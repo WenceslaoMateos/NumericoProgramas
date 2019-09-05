@@ -11,7 +11,7 @@ module EDOs
     abstract interface 
         function derivada(v)
             intent(in) :: v
-            real(8) v(0:), derivada(0:size(v)-1)
+            real(8) v(0:), derivada(0:size(v) - 1)
         end function derivada
     end interface
 
@@ -19,7 +19,7 @@ module EDOs
         function metodo(v, h, fp)
             procedure(derivada) :: fp
             real(8), intent(in) :: v(0:), h
-            real(8) metodo(0:size(v)-1)
+            real(8) metodo(0:size(v) - 1)
         end function metodo
     end interface
 
@@ -31,7 +31,7 @@ contains
     function eulerSimple(v, h, fp)
         intent (in) :: v, h
         procedure(derivada) :: fp
-        real(8) v(0:), eulerSimple(0:size(v)-1), h
+        real(8) v(0:), eulerSimple(0:size(v) - 1), h
   
         eulerSimple = v + h*fp(v)
     end function eulerSimple
@@ -40,7 +40,7 @@ contains
         intent (in) :: v, h
         procedure(derivada) :: fp
         real(8) h, v(0:)
-        real(8), dimension(0:size(v)-1) :: incr1, incr2, eulerModificado
+        real(8), dimension(0:size(v) - 1) :: incr1, incr2, eulerModificado
 
         incr1 = h*fp(v)
         incr2 = h*fp(v + incr1)
@@ -51,7 +51,7 @@ contains
         intent (in) :: v, h
         procedure(derivada) :: fp
         real(8) h, v(0:)
-        real(8), dimension(0:size(v)-1) :: incr, eulerMejorado
+        real(8), dimension(0:size(v) - 1) :: incr, eulerMejorado
 
         incr = (h/2.)*fp(v)        
         eulerMejorado = v + h*fp(v + incr)
@@ -61,7 +61,7 @@ contains
         intent (in) :: v, h
         procedure(derivada) :: fp
         real(8) h, v(0:)
-        real(8), dimension(0:size(v)-1):: k1, k2, k3, k4, rk
+        real(8), dimension(0:size(v) - 1):: k1, k2, k3, k4, rk
 
         k1 = h*fp(v)
         k2 = h*fp(v + k1/2.)
@@ -91,7 +91,7 @@ contains
         procedure(metodo) :: met
         procedure(derivada) :: fp
         integer(4) rep, i
-        real(8) h, vinicial(0:), v(0:size(vinicial - 1))
+        real(8) h, vinicial(0:), v(0:size(vinicial) - 1)
 
         open(2, file='datos.dat')
         v = vinicial
@@ -108,7 +108,7 @@ contains
         intent(in) :: vinicial, h, xf
         procedure(metodo) :: met
         procedure(derivada) :: fp
-        real(8) h, xf, vinicial(0:), v(0:size(vinicial - 1))
+        real(8) h, xf, vinicial(0:), v(0:size(vinicial) - 1)
 
         open(2, file='datos.dat')
         v = vinicial
