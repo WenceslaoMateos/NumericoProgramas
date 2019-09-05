@@ -86,14 +86,15 @@ contains
         e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
     end function rkf
 
-    subroutine iterarVeces(met, fp, vinicial, h, rep)
-        intent(in) :: vinicial, h, rep
+    subroutine iterarVeces(met, fp, vinicial, h, rep, archivo)
+        intent(in) :: vinicial, h, rep, archivo
         procedure(metodo) :: met
         procedure(derivada) :: fp
         integer(4) rep, i
         real(8) h, vinicial(0:), v(0:size(vinicial) - 1)
+        character (LEN=*) :: archivo
 
-        open(2, file='datos.dat')
+        open(2, file=archivo)
         v = vinicial
         write(2, *) v
         do i = 1, rep
@@ -101,16 +102,16 @@ contains
             write(2, *) v
         end do
         close(2)
-        call system('gnuplot -persist valores.p')
     end subroutine iterarVeces
     
-    subroutine iterarValorFinal(met, fp, vinicial, h, xf)
-        intent(in) :: vinicial, h, xf
+    subroutine iterarValorFinal(met, fp, vinicial, h, xf, archivo)
+        intent(in) :: vinicial, h, xf, archivo
         procedure(metodo) :: met
         procedure(derivada) :: fp
         real(8) h, xf, vinicial(0:), v(0:size(vinicial) - 1)
+        character (LEN=*) :: archivo
 
-        open(2, file='datos.dat')
+        open(2, file=archivo)
         v = vinicial
         write(2, *) v
         do while (v(0) <= xf)
@@ -118,7 +119,6 @@ contains
             write(2, *) v
         end do
         close(2)
-        call system('gnuplot -persist valores.p')
     end subroutine iterarValorFinal
 
 end module EDOs
@@ -129,6 +129,7 @@ program principal
     implicit none
 
     integer(4), parameter :: cant_ec = 1
+    character(len=*), parameter :: archivo = "datos.dat"
 
     integer(4) repeticiones
     real(8) v(0:cant_ec), h, xf
@@ -138,12 +139,17 @@ program principal
     v(0) = -5.
     v(1) = 25.
     xf = 25.
-    call iterar(eulerSimple, fp, v, h, repeticiones)
-    call iterar(eulerModificado, fp, v, h, repeticiones)
-    call iterar(eulerMejorado, fp, v, h, repeticiones)
-    call iterar(rk, fp, v, h, repeticiones)
-    call iterar(rkf, fp, v, h, xf)
-
+    call iterar(eulerSimple, fp, v, h, repeticiones, archivo)
+    call plot(archivo)
+    call iterar(eulerModificado, fp, v, h, repeticiones, archivo)
+    call plot(archivo)
+    call iterar(eulerMejorado, fp, v, h, repeticiones, archivo)
+    call plot(archivo)
+    call iterar(rk, fp, v, h, repeticiones, archivo)
+    call plot(archivo)
+    call iterar(rkf, fp, v, h, xf, archivo)
+    call plot(archivo)
+    
 contains
 
     function f(v)
@@ -161,4 +167,21 @@ contains
         fp(1) = 2.*v(0) 
     end function fp
 
+    subroutine plot(archivo)
+        intent(in) :: archivo
+        character (LEN=*) :: archivo
+
+        open(unit=2, file="temporal.p", access='SEQUENTIAL', status='REPLACE')
+        write(2, *) "set autoscale"
+        write(2, *) "unset log"
+        write(2, *) "unset label"
+        write(2, *) "set xtic auto"
+        write(2, *) "set ytic auto"
+        write(2, *) "set title 'E2'"
+        write(2, *) "set xlabel 'x'"
+        write(2, *) "set ylabel 'f(x)'"
+        write(2, *) "plot '", archivo, "' using 1:2 title 'metodo' with linespoints"
+        call system('gnuplot -persist temporal.p')
+        close(2, STATUS='DELETE')
+    end subroutine plot
 end program principal
