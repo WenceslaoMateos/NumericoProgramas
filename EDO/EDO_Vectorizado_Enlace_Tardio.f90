@@ -1,10 +1,11 @@
 module EDOs
     implicit none
     
+!-------------------------------------DEFINICIÓN DE FUNCIONES---------------------------------------------!
     abstract interface 
         function funcion(v)
             real(8), intent(in) :: v(0:)
-            real(8) f
+            real(8) funcion
         end function funcion
     end interface
 
@@ -23,11 +24,22 @@ module EDOs
         end function metodo
     end interface
 
-    interface iterar
-        module procedure iterarVeces, iterarValorFinal
+    abstract interface
+        function cambioPaso(met, v, h, tol, fp)
+            procedure(metodo) :: met
+            procedure(derivada) :: fp
+            real(8), intent(in) :: v(0:), h, tol
+            real(8) cambioPaso
+        end function cambioPaso
     end interface
+
+    interface iterar
+        module procedure iterarVeces, iterarValorFinal, iterarVecesTolerancia, iterarValorFinalTolerancia
+    end interface iterar
+
 contains
 
+!-------------------------------------DEFINICIÓN DE METODOS-----------------------------------------------!
     function eulerSimple(v, h, fp)
         intent (in) :: v, h
         procedure(derivada) :: fp
@@ -75,7 +87,7 @@ contains
         procedure(derivada) :: fp
         real(8) v(0:), h
         real(8), dimension(0:size(v) - 1) :: k1, k2, k3, k4, k5, k6, rkf, e
-            
+        
         k1 = h*fp(v)
         k2 = h*fp(v + k1/4.0)
         k3 = h*fp(v + (3.0*k1 + 9.0*k2)/32.0)
@@ -85,7 +97,73 @@ contains
         rkf = v + (25.0*k1/216.0 + 1408.0*k3/2565.0 + 2197.0*k4/4104.0 - k5/5.0)
         e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
     end function rkf
+    
+!-----------------------------------------CAMBIO DE PASO--------------------------------------------------!
+    function estrategia1(met, v, h, tol, fp)
+        procedure(metodo) :: met
+        procedure(derivada) :: fp
+        real(8), intent(in) :: v(0:), h, tol
+        real(8) estrategia1
+        real(8) vsig(0:size(v) - 1), vsig2(0:size(v) - 1)
 
+        estrategia1 = h
+        vsig = met(v, estrategia1, fp)
+        vsig2 = met(met(v, estrategia1/2., fp), estrategia1/2., fp)
+        do while (maxval(abs(vsig - vsig2)) > tol)
+            estrategia1 = estrategia1/2.
+            vsig = met(v, estrategia1, fp)
+            vsig2 = met(met(v, estrategia1/2, fp), estrategia1/2., fp)    
+            write(*,*) estrategia1
+        end do
+    end function estrategia1
+
+    function estrategia2(met, v, h, tol, fp)
+        procedure(metodo) :: met
+        procedure(derivada) :: fp
+        real(8), intent(in) :: v(0:), h, tol
+        real(8), dimension(0:size(v) - 1) :: k1, k2, k3, k4, k5, k6, e
+        real(8) estrategia2, alfa, error
+
+!        k1 = h*fp(v)
+!        k2 = h*fp(v + k1/4.0)
+!        k3 = h*fp(v + (3.0*k1 + 9.0*k2)/32.0)
+!        k4 = h*fp(v + (1932.0*k1 - 7200.0*k2 + 7296.0*k3)/2197.0)
+!        k5 = h*fp(v + 439.0*k1/216.0 - 8.0*k2 + 3680.0*k3/513.0 - 845.0*k4/4104.0)
+!        k6 = h*fp(v - 8.0*k1/27.0 + 2.0*k2 - 3544.0*k3/2565.0 + 1859.0*k4/4104.0 - 11.0*k5/40.0)
+!        e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
+!        error = maxval(abs(e))
+!        if (error > tol) then
+!            alfa = 0.22
+!        else
+!            alfa = 0.2
+!        end if
+!        estrategia2 = h * (tol/error)**alfa
+
+        k1 = h*fp(v)
+        k2 = h*fp(v + k1/4.0)
+        k3 = h*fp(v + (3.0*k1 + 9.0*k2)/32.0)
+        k4 = h*fp(v + (1932.0*k1 - 7200.0*k2 + 7296.0*k3)/2197.0)
+        k5 = h*fp(v + 439.0*k1/216.0 - 8.0*k2 + 3680.0*k3/513.0 - 845.0*k4/4104.0)
+        k6 = h*fp(v - 8.0*k1/27.0 + 2.0*k2 - 3544.0*k3/2565.0 + 1859.0*k4/4104.0 - 11.0*k5/40.0)
+        e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
+        error = maxval(abs(e))
+        estrategia2 = h
+        do while (error > tol)
+            alfa = 0.22
+            estrategia2 = estrategia2 * (tol/error)**alfa
+            k1 = estrategia2*fp(v)
+            k2 = estrategia2*fp(v + k1/4.0)
+            k3 = estrategia2*fp(v + (3.0*k1 + 9.0*k2)/32.0)
+            k4 = estrategia2*fp(v + (1932.0*k1 - 7200.0*k2 + 7296.0*k3)/2197.0)
+            k5 = estrategia2*fp(v + 439.0*k1/216.0 - 8.0*k2 + 3680.0*k3/513.0 - 845.0*k4/4104.0)
+            k6 = estrategia2*fp(v - 8.0*k1/27.0 + 2.0*k2 - 3544.0*k3/2565.0 + 1859.0*k4/4104.0 - 11.0*k5/40.0)
+            e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
+            error = maxval(abs(e))
+        end do
+    end function estrategia2
+
+!--------------------------------DEFINICIÓN DE ITERACIONES------------------------------------------------!
+!--------------------------------Sin cambio de paso---------------------------------!
     subroutine iterarVeces(met, fp, vinicial, h, rep, archivo)
         intent(in) :: vinicial, h, rep, archivo
         procedure(metodo) :: met
@@ -121,6 +199,48 @@ contains
         close(2)
     end subroutine iterarValorFinal
 
+!--------------------------------Con cambio de paso---------------------------------!
+    subroutine iterarVecesTolerancia(met, fp, vinicial, h, cambioH, tol, rep, archivo)
+        intent(in) :: vinicial, h, rep, archivo, tol
+        procedure(metodo) :: met
+        procedure(derivada) :: fp
+        procedure(cambioPaso) :: cambioH
+        integer(4) rep, i
+        real(8) h, hnuevo, tol, vinicial(0:), v(0:size(vinicial) - 1)
+        character (LEN=*) :: archivo
+
+        open(2, file=archivo)
+        v = vinicial
+        hnuevo = h
+        write(2, *) v
+        do i = 1, rep
+            hnuevo = cambioH(met, v, hnuevo, tol, fp)
+            v = met(v, hnuevo, fp)
+            write(2, *) v
+        end do
+        close(2)
+    end subroutine iterarVecesTolerancia
+
+    subroutine iterarValorFinalTolerancia(met, fp, vinicial, h, cambioH, tol, xf, archivo)
+        intent(in) :: vinicial, h, xf, archivo, tol
+        procedure(metodo) :: met
+        procedure(derivada) :: fp
+        procedure(cambioPaso) :: cambioH
+        real(8) h, hnuevo, tol, xf, vinicial(0:), v(0:size(vinicial) - 1)
+        character (LEN=*) :: archivo
+
+        open(2, file=archivo)
+        v = vinicial
+        hnuevo = h
+        write(2, *) v
+        do while (v(0) <= xf)
+            hnuevo = cambioH(met, v, hnuevo, tol, fp)
+            v = met(v, hnuevo, fp)
+            write(2, *) v
+        end do
+        close(2)
+    end subroutine iterarValorFinalTolerancia
+    
 end module EDOs
 
 program principal
@@ -129,25 +249,26 @@ program principal
     implicit none
 
     integer(4), parameter :: cant_ec = 1
-    character(len=*), parameter :: archivo = "datos.dat"
+    character(len=*), parameter :: archivo = "EDO/datos.dat"
 
     integer(4) repeticiones
-    real(8) v(0:cant_ec), h, xf
+    real(8) v(0:cant_ec), h, tol, xf
 
     repeticiones = 15
     h = 1.
     v(0) = -5.
     v(1) = 25.
-    xf = 25.
-    call iterar(eulerSimple, fp, v, h, repeticiones, archivo)
-    call plot(archivo)
-    call iterar(eulerModificado, fp, v, h, repeticiones, archivo)
-    call plot(archivo)
-    call iterar(eulerMejorado, fp, v, h, repeticiones, archivo)
-    call plot(archivo)
-    call iterar(rk, fp, v, h, repeticiones, archivo)
-    call plot(archivo)
-    call iterar(rkf, fp, v, h, xf, archivo)
+    tol = 0.000000001
+    xf = 10.
+!    call iterar(eulerSimple, fp, v, h, estrategia1, tol, xf, archivo)
+!    call plot(archivo)
+!    call iterar(eulerModificado, fp, v, h, estrategia1, tol, xf, archivo)
+!    call plot(archivo)
+!    call iterar(eulerMejorado, fp, v, h, estrategia1, tol, xf, archivo)
+!    call plot(archivo)
+!    call iterar(rk, fp, v, h, estrategia1, tol, xf, archivo)
+!    call plot(archivo)
+    call iterar(rkf, fp, v, h, estrategia2, tol, repeticiones, archivo)
     call plot(archivo)
     
 contains
