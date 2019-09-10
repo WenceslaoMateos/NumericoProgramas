@@ -194,10 +194,10 @@ contains
         open(2, file=archivo)
         v = vinicial
         h = hinicial
-        write(2, *) v
+        write(2, *) v, h
         do i = 1, rep
             call pasoVariante(met, v, h, tol, fp)
-            write(2, *) v
+            write(2, *) v, h
         end do
         close(2)
     end subroutine iterarVecesTolerancia
@@ -213,10 +213,10 @@ contains
         open(2, file=archivo)
         v = vinicial
         h = hinicial
-        write(2, *) v
+        write(2, *) v, h
         do while (v(0) <= xf)
             call pasoVariante(met, v, h, tol, fp)
-            write(2, *) v
+            write(2, *) v, h
         end do
         close(2)
     end subroutine iterarValorFinalTolerancia
