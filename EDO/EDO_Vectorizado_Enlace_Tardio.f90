@@ -127,22 +127,6 @@ contains
         real(8), dimension(0:size(v) - 1) :: k1, k2, k3, k4, k5, k6, e
         real(8) alfa, error
 
-        ! k1 = h*fp(v)
-        ! k2 = h*fp(v + k1/4.0)
-        ! k3 = h*fp(v + (3.0*k1 + 9.0*k2)/32.0)
-        ! k4 = h*fp(v + (1932.0*k1 - 7200.0*k2 + 7296.0*k3)/2197.0)
-        ! k5 = h*fp(v + 439.0*k1/216.0 - 8.0*k2 + 3680.0*k3/513.0 - 845.0*k4/4104.0)
-        ! k6 = h*fp(v - 8.0*k1/27.0 + 2.0*k2 - 3544.0*k3/2565.0 + 1859.0*k4/4104.0 - 11.0*k5/40.0)
-        ! e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
-        ! error = maxval(abs(e))
-        ! if (error > tol) then
-        !     alfa = 0.22
-        ! else
-        !     alfa = 0.2
-        ! end if
-        ! h = h * ((tol/error)**alfa)
-        ! v = met(v, h, fp)
-
         k1 = h*fp(v)
         k2 = h*fp(v + k1/4.0)
         k3 = h*fp(v + (3.0*k1 + 9.0*k2)/32.0)
@@ -151,18 +135,12 @@ contains
         k6 = h*fp(v - 8.0*k1/27.0 + 2.0*k2 - 3544.0*k3/2565.0 + 1859.0*k4/4104.0 - 11.0*k5/40.0)
         e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
         error = maxval(abs(e))
-        do while (error > tol)
+        if (error > tol) then
             alfa = 0.22
-            h = h * (tol/error)**alfa
-            k1 = h*fp(v)
-            k2 = h*fp(v + k1/4.0)
-            k3 = h*fp(v + (3.0*k1 + 9.0*k2)/32.0)
-            k4 = h*fp(v + (1932.0*k1 - 7200.0*k2 + 7296.0*k3)/2197.0)
-            k5 = h*fp(v + 439.0*k1/216.0 - 8.0*k2 + 3680.0*k3/513.0 - 845.0*k4/4104.0)
-            k6 = h*fp(v - 8.0*k1/27.0 + 2.0*k2 - 3544.0*k3/2565.0 + 1859.0*k4/4104.0 - 11.0*k5/40.0)
-            e = k1/360.0 - 128.0*k3/4275.0 - 2197.0*k4/75240.0 + k5/50.0 + 2.0*k6/55.0
-            error = maxval(abs(e))
-        end do
+        else
+            alfa = 0.2
+        end if
+        h = h * ((tol/error)**alfa)
         v = met(v, h, fp)
     end subroutine estrategia2
 
