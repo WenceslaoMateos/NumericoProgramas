@@ -92,7 +92,7 @@ subroutine grabarVector(V, archivo)
     character(len=*) :: archivo
     
     open(unit=2, file=archivo, access='SEQUENTIAL', status='REPLACE')
-    WRITE(2, *) V
+    write(2, *) V
     close(2, status='KEEP')
 end subroutine grabarVector
 
