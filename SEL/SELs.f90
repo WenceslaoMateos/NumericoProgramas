@@ -107,11 +107,11 @@ program principal
     matriz(3, 2) = 1.
     matriz(3, 3) = 2.
     inversa = matrizInversa(matriz)
-    call mostrarMatriz(matriz, orden, orden)
+    call mostrarMatriz(matriz)
     write(*, *)
-    call mostrarMatriz(inversa, orden, orden)
+    call mostrarMatriz(inversa)
     write(*, *)
-    call mostrarMatriz(matrizInversa(inversa), orden, orden)
+    call mostrarMatriz(matrizInversa(inversa))
 contains
 
 end program principal

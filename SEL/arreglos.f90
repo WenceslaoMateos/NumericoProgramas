@@ -1,116 +1,99 @@
-MODULE arreglos
+module arreglos
 
-IMPLICIT NONE
+    implicit none
 
 CONTAINS
 
-SUBROUTINE cargarMatriz(A, N, M)
-INTENT (IN) :: N, M
-INTENT (OUT) :: A
-INTEGER(4) N, M, i, j
-REAL(8) A(N, M)
+subroutine cargarMatriz(A)
+    intent(out) :: A
+    integer(4) N, M, i, j
+    real(8) A(:, :)
 
-    DO i = 1, N
-        DO j = 1, M
-            WRITE(*, '(A, I2, A, I2, A)', ADVANCE='NO') 'Ingrese el elemento (', i, ', ', j, ') de la matriz: '
-            READ(*, *) A(i, j)
-        END DO
-    END DO
-END SUBROUTINE
+    N = size(A, dim=1)
+    M = size(A, dim=2)
+    do i = 1, N
+        do j = 1, M
+            write(*, '(A, I2, A, I2, A)', advance='NO') 'Ingrese el elemento (', i, ', ', j, ') de la matriz: '
+            read(*, *) A(i, j)
+        end do
+    end do
+end subroutine cargarMatriz
 
-SUBROUTINE mostrarMatriz(A, N, M)
-INTENT (IN) :: N, M, A
-INTEGER(4) N, M, i, j
-REAL(8) A(N, M)
+subroutine mostrarMatriz(A)
+    real(8), intent(in) :: A(:, :)
+    integer(4) i, filas
 
-    DO i = 1, N
-        DO j = 1, M
-            WRITE(*, '(F10.5, A)', ADVANCE='NO') A(i, j), ' '
-        END DO
-        WRITE (*, *)
-    END DO
-END SUBROUTINE
+    filas = size(A, dim=1)
+    do i = 1, filas
+        write(*, *) A(i, :)
+    end do
+end subroutine mostrarMatriz
 
-SUBROUTINE leerMatriz(A, N, M, archivo)
-INTENT (IN) :: N, M, archivo
-INTENT (OUT) :: A
-INTEGER(4) N, M, i, j
-REAL(8) A(N, M)
-CHARACTER (LEN=*) :: archivo
+subroutine leerMatriz(A, archivo)
+    character(len=*), intent(in) :: archivo
+    real(8), intent(out) :: A(:, :)
+    integer(4) N, M, i
 
-    OPEN(UNIT=2, FILE=archivo, ACCESS='SEQUENTIAL')
-    DO i = 1, N
-        DO j = 1, M
-            READ(2, '(F10.5)', ADVANCE='NO') A(i, j)
-        END DO
-        READ(2, *)
-    END DO
-    CLOSE(2)
-END SUBROUTINE
+    N = size(A, dim=1)
+    M = size(A, dim=2)
+    open(unit=2, file=archivo, access='SEQUENTIAL')
+    do i = 1, N
+        read(2, '(F10.5)', ADVANCE='NO') A(i, :M)
+    end do
+    close(2)
+end subroutine leerMatriz
 
-SUBROUTINE grabarMatriz(A, N, M, archivo)
-INTENT (IN) :: N, M, A, archivo
-INTEGER(4) N, M, i, j
-REAL(8) A(N, M)
-CHARACTER (LEN=*) :: archivo
+subroutine grabarMatriz(A, archivo)
+    intent(in) :: A, archivo
+    integer(4) i, filas
+    real(8) A(:, :)
+    character(len=*) :: archivo
 
-    OPEN(UNIT=2, FILE=archivo, ACCESS='SEQUENTIAL', STATUS='REPLACE')
-    DO i = 1, N
-        DO j = 1, M
-            WRITE(2, '(F10.5, A)', ADVANCE='NO') A(i, j), ' '
-        END DO
-        WRITE (2, *)
-    END DO
-    CLOSE(2, STATUS='KEEP')
-END SUBROUTINE
+    filas = size(A, dim=1)
+    open(unit=2, file=archivo, access='SEQUENTIAL', status='REPLACE')
+    do i = 1, filas
+        write(2, *) A(i, :)
+    end do
+    close(2, status='KEEP')
+end subroutine grabarMatriz
 
-SUBROUTINE cargarVector(V, N)
-INTENT (IN) :: N
-INTENT (OUT) :: V
-REAL(8) V(N)
-INTEGER(4) N, i
+subroutine cargarVector(V)
+    intent(out) :: V
+    real(8) V(:)
+    integer(4) N, i
     
-    DO i = 1, N
-        WRITE(*, '(A, I3, A)', ADVANCE='NO') 'Ingrese el elemento ', i, ' del vector: '
-        READ(*, *) V(i)
-    END DO
-END SUBROUTINE
+    N = size(V)
+    do i = 1, N
+        write(*, '(A, I3, A)', advance='NO') 'Ingrese el elemento ', i, ' del vector: '
+        read(*, *) V(i)
+    end do
+end subroutine cargarVector
 
-SUBROUTINE mostrarVector(V, N)
-INTENT (IN) :: N, V
-REAL(8) V(N)
-INTEGER(4) N, i
+subroutine mostrarVector(V)
+    real(8), intent(in) :: v(:)
     
-    DO i = 1, N
-        WRITE(*, '(F10.5)') V(i)
-    END DO
-END SUBROUTINE
+    write(*, *) V
+end subroutine mostrarVector
 
-SUBROUTINE leerVector(V, N, archivo)
-INTENT (IN) :: N, archivo
-INTENT (OUT) :: V
-REAL(8) V(N)
-INTEGER(4) N, i
-CHARACTER (LEN=*) :: archivo
+subroutine leerVector(V, archivo)
+    character(len=*), intent(in) :: archivo
+    real(8), intent(out) :: V(:)
+    integer(4) N
     
-    OPEN(UNIT=2, FILE=archivo, ACCESS='SEQUENTIAL')
-    DO i = 1, N
-        READ(2, '(F10.5)') V(i)
-    END DO
-    CLOSE(2)
-END SUBROUTINE
+    N = size(V)
+    open(unit=2, file=archivo, access='SEQUENTIAL')
+    read(2, *) V(:N)
+    close(2)
+end subroutine leerVector
 
-SUBROUTINE grabarVector(V, N, archivo)
-INTENT (IN) :: N, V, archivo
-REAL(8) V(N)
-INTEGER(4) N, i
-CHARACTER (LEN=*) :: archivo
+subroutine grabarVector(V, archivo)
+    intent(in) :: V, archivo
+    real(8) V(:)
+    character(len=*) :: archivo
     
-    OPEN(UNIT=2, FILE=archivo, ACCESS='SEQUENTIAL', STATUS='REPLACE')
-    DO i = 1, N
-        WRITE(2, '(F10.5)') V(i)
-    END DO
-    CLOSE(2, STATUS='KEEP')
-END SUBROUTINE
+    open(unit=2, file=archivo, access='SEQUENTIAL', status='REPLACE')
+    WRITE(2, *) V
+    close(2, status='KEEP')
+end subroutine grabarVector
 
-END MODULE
+end module arreglos
