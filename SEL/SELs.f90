@@ -164,26 +164,15 @@ program principal
 
     implicit none
 
-    integer, parameter :: orden = 3
-    real(8) matriz(orden, orden), inversa(orden, orden)
+    integer, parameter :: orden = 4
+    real(8) matriz(orden, orden), term_ind(orden, 1)
 
-    matriz(1, 1) = 1.
-    matriz(1, 2) = 0.
-    matriz(1, 3) = 0.
-    matriz(2, 1) = -1.
-    matriz(2, 2) = 2.
-    matriz(2, 3) = 3.
-    matriz(3, 1) = 0.
-    matriz(3, 2) = 1.
-    matriz(3, 3) = 2.
-    inversa = matrizInversa(matriz)
+    call leerMatriz(matriz, "matriz_ejemplo1.txt")
+    call leerMatriz(term_ind, "independientes_ejemplo1.txt")
     call mostrarMatriz(matriz)
     write(*, *)
-    call mostrarMatriz(inversa)
+    call mostrarMatriz(term_ind)
     write(*, *)
-    call mostrarMatriz(matrizInversa(inversa))
-    write(*, *)
-    write(*, *) "Condicion = ", condicion(matriz)
 contains
 
 end program principal

@@ -2,7 +2,7 @@ module arreglos
 
     implicit none
 
-CONTAINS
+contains
 
 subroutine cargarMatriz(A)
     intent(out) :: A
@@ -38,7 +38,7 @@ subroutine leerMatriz(A, archivo)
     M = size(A, dim=2)
     open(unit=2, file=archivo, access='SEQUENTIAL')
     do i = 1, N
-        read(2, '(F10.5)', ADVANCE='NO') A(i, :M)
+        read(2, *) A(i, :M)
     end do
     close(2)
 end subroutine leerMatriz
