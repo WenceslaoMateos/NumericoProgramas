@@ -62,61 +62,117 @@ function solucionGaussJordan(matriz, term_ind)
     end do
 end function solucionGaussJordan
 
-function reduccionCrout(matriz)
-    intent(in) :: matriz
-    real(8) matriz(:, :), reduccionCrout(size(matriz, dim=1), size(matriz, dim=2))
-    integer(4) orden, i, fila, k, col
+function jacobi(matriz, term_ind, xini, tol)
+    real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
+    real(8), intent(in) :: tol
+    real(8), dimension(size(term_ind, dim = 1), size(term_ind, dim= 2 )) :: jacobi, xant
+    real(8), dimension(size(term_ind, dim = 1)) :: sum
+    real(8) e1, e2
+    integer(4) i, j, n
 
-    reduccionCrout = matriz
-    reduccionCrout(1, 2:) = reduccionCrout(1, 2:) / reduccionCrout(1, 1)
-    orden = size(matriz, dim=1)
-    do i = 2, orden
-        ! Calculo de la columna i de L
-        do fila = i + 1, orden
-            do k = 1, i - 1
-                reduccionCrout(fila, i) = reduccionCrout(fila, i) - reduccionCrout(fila, k) * reduccionCrout(k, i)
+    xant = xini
+    n = size(jacobi, dim = 1)
+    e1 = tol + 1
+    e2 = tol + 1
+    do while((e1 > tol) .and. (e2 > tol))
+        do i = 1, n
+            sum = 0
+            do j = 1, i - 1
+                sum = sum + matriz(i, j) * xant(j, :)
             end do
-        end do
-
-        ! Calculo de la fila i de U
-        do col = i + 1, orden
-            do k = 1, i - 1
-                reduccionCrout(i, col) = reduccionCrout(i, col) - reduccionCrout(i, k) * reduccionCrout(k, col)
+            do j = i + 1, n
+                sum = sum + matriz(i, j) * xant(j, :)
             end do
-        
-            reduccionCrout(i, col) = reduccionCrout(i, col) / reduccionCrout(i, i)
+            jacobi(i, :) = (term_ind(i, :) - sum) / matriz(i, i)
         end do
+        e1 = maxval(abs(jacobi-xant))
+        e2 = normaMatriz(residuo(matriz, jacobi, term_ind))
     end do
-end function reduccionCrout
+end function jacobi
 
-function solucionCrout(matriz, term_ind)
-    real(8), dimension(:, :), intent(in) :: matriz, term_ind
-    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionCrout, c
-    real(8) aux(size(matriz, dim=1), size(matriz, dim=2))
-    integer(4) i, orden, k
+function gaussSeidel(matriz, term_ind, xini, tol)
+    real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
+    real(8), intent(in) :: tol
+    real(8), dimension(size(term_ind, dim = 1), size(term_ind, dim= 2 )) :: gaussSeidel, xant
+    real(8), dimension(size(term_ind, dim = 1)) :: sum
+    real(8) e1, e2
+    integer(4) i, j, n
 
-    orden = size(matriz, dim=1)
-    aux = reduccionCrout(matriz)
-
-    ! Calcula c
-    c(1, :) = term_ind(1, :) / aux(1, 1)
-    do i = 2, orden
-        c(i, :) = term_ind(i, :)
-        do k = 1, i - 1
-            c(i, :) = c(i, :) - aux(i, k) * c(k, :)
+    xant = xini
+    n = size(gaussSeidel, dim = 1)
+    e1 = tol + 1
+    e2 = tol + 1
+    do while((e1 > tol) .and. (e2 > tol))
+        do i = 1, n
+            sum = 0
+            do j = 1, i - 1
+                sum = sum + matriz(i, j) * gaussSeidel(j, :)
+            end do
+            do j = i + 1, n
+                sum = sum + matriz(i, j) * xant(j, :)
+            end do
+            gaussSeidel(i, :) = (term_ind(i, :) - sum) / matriz(i, i)
         end do
-        c(i, :) = c(i, :) / aux(i, i)
+        e1 = maxval(abs(gaussSeidel-xant))
+        e2 = normaMatriz(residuo(matriz, gaussSeidel, term_ind))
     end do
+end function gaussSeidel
 
-    ! Calcula la Solución
-    solucionCrout(orden, :) = c(orden, :)
-    do i = orden -1, 1, -1
-        solucionCrout(i, :) = c(i, :)
-        do k = i + 1, orden
-            solucionCrout(i, :) = solucionCrout(i, :) - aux(i, k) * solucionCrout(k, :)
-        end do
-    end do
-end function
+!function reduccionCrout(matriz)
+!    intent(in) :: matriz
+!    real(8) matriz(:, :), reduccionCrout(size(matriz, dim=1), size(matriz, dim=2))
+!    integer(4) orden, i, fila, k, col
+!
+!    reduccionCrout = matriz
+!    reduccionCrout(1, 2:) = reduccionCrout(1, 2:) / reduccionCrout(1, 1)
+!    orden = size(matriz, dim=1)
+!    do i = 2, orden
+!        Calculo de la columna i de L
+!        do fila = i + 1, orden
+!            do k = 1, i - 1
+!                reduccionCrout(fila, i) = reduccionCrout(fila, i) - reduccionCrout(fila, k) * reduccionCrout(k, i)
+!            end do
+!        end do
+!
+!        Calculo de la fila i de U
+!        do col = i + 1, orden
+!            do k = 1, i - 1
+!                reduccionCrout(i, col) = reduccionCrout(i, col) - reduccionCrout(i, k) * reduccionCrout(k, col)
+!            end do
+!        
+!            reduccionCrout(i, col) = reduccionCrout(i, col) / reduccionCrout(i, i)
+!        end do
+!    end do
+!end function reduccionCrout
+!
+!function solucionCrout(matriz, term_ind)
+!    real(8), dimension(:, :), intent(in) :: matriz, term_ind
+!    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionCrout, c
+!    real(8) aux(size(matriz, dim=1), size(matriz, dim=2))
+!    integer(4) i, orden, k
+!
+!    orden = size(matriz, dim=1)
+!    aux = reduccionCrout(matriz)
+!
+!    ! Calcula c
+!    c(1, :) = term_ind(1, :) / aux(1, 1)
+!    do i = 2, orden
+!        c(i, :) = term_ind(i, :)
+!        do k = 1, i - 1
+!            c(i, :) = c(i, :) - aux(i, k) * c(k, :)
+!        end do
+!        c(i, :) = c(i, :) / aux(i, i)
+!    end do
+!
+!    ! Calcula la Solución
+!    solucionCrout(orden, :) = c(orden, :)
+!    do i = orden -1, 1, -1
+!        solucionCrout(i, :) = c(i, :)
+!        do k = i + 1, orden
+!            solucionCrout(i, :) = solucionCrout(i, :) - aux(i, k) * solucionCrout(k, :)
+!        end do
+!    end do
+!end function
 
 function identidad(orden)
     integer(4), intent(in) :: orden
@@ -141,6 +197,13 @@ function matrizInversa(matriz) ! Llamar solo con matrices cuadradas
     matrizInversa = aux(:, orden + 1:)
     deallocate(aux)
 end function
+
+function residuo(mat, sol, term_ind)
+    real(8), intent(in) :: mat(:,:), sol(:,:), term_ind(:,:)
+    real(8) residuo(size(mat, dim=1), size(mat, dim=2))
+    
+    residuo = matmul(mat,sol) - term_ind
+end function residuo
 
 function normaMatriz(matriz)
     intent(in) :: matriz
