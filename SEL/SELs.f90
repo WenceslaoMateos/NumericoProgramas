@@ -228,14 +228,17 @@ program principal
     implicit none
 
     integer, parameter :: orden = 4
-    real(8) matriz(orden, orden), term_ind(orden, 1)
+    real(8) matriz(orden, orden), term_ind(orden, 1), sol(orden, 1), xini(orden, 1)
 
+    xini = 0
     call leerMatriz(matriz, "matriz_ejemplo1.txt")
     call leerMatriz(term_ind, "independientes_ejemplo1.txt")
     call mostrarMatriz(matriz)
     write(*, *)
     call mostrarMatriz(term_ind)
     write(*, *)
+    sol = gaussSeidel(matriz, term_ind, xini, 0.0001_8)
+    call mostrarMatriz(sol)
 contains
 
 end program principal
