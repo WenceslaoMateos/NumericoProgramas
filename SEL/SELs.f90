@@ -120,61 +120,61 @@ function gaussSeidel(matriz, term_ind, xini, tol)
     end do
 end function gaussSeidel
 
-!function reduccionCrout(matriz)
-!    intent(in) :: matriz
-!    real(8) matriz(:, :), reduccionCrout(size(matriz, dim=1), size(matriz, dim=2))
-!    integer(4) orden, i, fila, k, col
-!
-!    reduccionCrout = matriz
-!    reduccionCrout(1, 2:) = reduccionCrout(1, 2:) / reduccionCrout(1, 1)
-!    orden = size(matriz, dim=1)
-!    do i = 2, orden
-!        Calculo de la columna i de L
-!        do fila = i + 1, orden
-!            do k = 1, i - 1
-!                reduccionCrout(fila, i) = reduccionCrout(fila, i) - reduccionCrout(fila, k) * reduccionCrout(k, i)
-!            end do
-!        end do
-!
-!        Calculo de la fila i de U
-!        do col = i + 1, orden
-!            do k = 1, i - 1
-!                reduccionCrout(i, col) = reduccionCrout(i, col) - reduccionCrout(i, k) * reduccionCrout(k, col)
-!            end do
-!        
-!            reduccionCrout(i, col) = reduccionCrout(i, col) / reduccionCrout(i, i)
-!        end do
-!    end do
-!end function reduccionCrout
-!
-!function solucionCrout(matriz, term_ind)
-!    real(8), dimension(:, :), intent(in) :: matriz, term_ind
-!    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionCrout, c
-!    real(8) aux(size(matriz, dim=1), size(matriz, dim=2))
-!    integer(4) i, orden, k
-!
-!    orden = size(matriz, dim=1)
-!    aux = reduccionCrout(matriz)
-!
-!    ! Calcula c
-!    c(1, :) = term_ind(1, :) / aux(1, 1)
-!    do i = 2, orden
-!        c(i, :) = term_ind(i, :)
-!        do k = 1, i - 1
-!            c(i, :) = c(i, :) - aux(i, k) * c(k, :)
-!        end do
-!        c(i, :) = c(i, :) / aux(i, i)
-!    end do
-!
-!    ! Calcula la Solución
-!    solucionCrout(orden, :) = c(orden, :)
-!    do i = orden -1, 1, -1
-!        solucionCrout(i, :) = c(i, :)
-!        do k = i + 1, orden
-!            solucionCrout(i, :) = solucionCrout(i, :) - aux(i, k) * solucionCrout(k, :)
-!        end do
-!    end do
-!end function
+function reduccionCrout(matriz)
+   intent(in) :: matriz
+   real(8) matriz(:, :), reduccionCrout(size(matriz, dim=1), size(matriz, dim=2))
+   integer(4) orden, i, fila, k, col
+
+   reduccionCrout = matriz
+   reduccionCrout(1, 2:) = reduccionCrout(1, 2:) / reduccionCrout(1, 1)
+   orden = size(matriz, dim=1)
+   do i = 2, orden
+       ! Calculo de la columna i de L
+       do fila = i + 1, orden
+           do k = 1, i - 1
+               reduccionCrout(fila, i) = reduccionCrout(fila, i) - reduccionCrout(fila, k) * reduccionCrout(k, i)
+           end do
+       end do
+
+       ! Calculo de la fila i de U
+       do col = i + 1, orden
+           do k = 1, i - 1
+               reduccionCrout(i, col) = reduccionCrout(i, col) - reduccionCrout(i, k) * reduccionCrout(k, col)
+           end do
+       
+           reduccionCrout(i, col) = reduccionCrout(i, col) / reduccionCrout(i, i)
+       end do
+   end do
+end function reduccionCrout
+
+function solucionCrout(matriz, term_ind)
+   real(8), dimension(:, :), intent(in) :: matriz, term_ind
+   real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionCrout, c
+   real(8) aux(size(matriz, dim=1), size(matriz, dim=2))
+   integer(4) i, orden, k
+
+   orden = size(matriz, dim=1)
+   aux = reduccionCrout(matriz)
+
+   ! Calcula c
+   c(1, :) = term_ind(1, :) / aux(1, 1)
+   do i = 2, orden
+       c(i, :) = term_ind(i, :)
+       do k = 1, i - 1
+           c(i, :) = c(i, :) - aux(i, k) * c(k, :)
+       end do
+       c(i, :) = c(i, :) / aux(i, i)
+   end do
+
+   ! Calcula la Solución
+   solucionCrout(orden, :) = c(orden, :)
+   do i = orden -1, 1, -1
+       solucionCrout(i, :) = c(i, :)
+       do k = i + 1, orden
+           solucionCrout(i, :) = solucionCrout(i, :) - aux(i, k) * solucionCrout(k, :)
+       end do
+   end do
+end function
 
 function identidad(orden)
     integer(4), intent(in) :: orden
@@ -221,6 +221,30 @@ function condicion(matriz)
     condicion = normaMatriz(matriz) * normaMatriz(matrizInversa(matriz))
 end function condicion
 
+subroutine pivotear(matriz)
+    real(8), intent(inout) :: matriz(:, :)
+    real(8) aux(size(matriz, dim=2))
+    integer(4) j, i, filas, columnas, pivote
+
+    filas = size(matriz, dim=1)
+    columnas = size(matriz, dim=2)
+    j = 1 ! j pensarlo como la diagonal
+    do while (j < filas .and. j < columnas)
+        pivote = j
+        do i = j + 1, filas
+            if (abs(matriz(pivote, j)) < abs(matriz (i, j))) then
+                pivote = i
+            end if
+        end do
+        if (pivote /= j) then
+            aux = matriz(j, :)
+            matriz(j, :) = matriz(pivote, :)
+            matriz(pivote, :) = aux
+        end if
+        j = j + 1
+    end do
+end subroutine pivotear
+
 end module SELs
 
 program principal
@@ -235,10 +259,20 @@ program principal
     xini = 0
     call leerMatriz(matriz, "matriz_ejemplo1.txt")
     call leerMatriz(term_ind, "independientes_ejemplo1.txt")
+
     call mostrarMatriz(matriz)
     write(*, *)
+
+    call pivotear(matriz)
+    call mostrarMatriz(matriz)
+    write(*, *)
+
     call mostrarMatriz(term_ind)
     write(*, *)
+
+    call mostrarMatriz(jacobi(matriz, term_ind, xini, 0.000000000001_8))
+    write(*, *)
+    
     call mostrarMatriz(gaussSeidel(matriz, term_ind, xini, 0.000000000001_8))
 contains
 
