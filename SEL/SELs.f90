@@ -70,11 +70,12 @@ function jacobi(matriz, term_ind, xini, tol)
     real(8) e1, e2
     integer(4) i, j, n
 
-    xant = xini
+    jacobi = xini
     n = size(jacobi, dim = 1)
     e1 = tol + 1
     e2 = tol + 1
     do while((e1 > tol) .and. (e2 > tol))
+        xant = jacobi
         do i = 1, n
             sum = 0
             do j = 1, i - 1
@@ -98,11 +99,12 @@ function gaussSeidel(matriz, term_ind, xini, tol)
     real(8) e1, e2
     integer(4) i, j, n
 
-    xant = xini
+    gaussSeidel = xini
     n = size(gaussSeidel, dim = 1)
     e1 = tol + 1
     e2 = tol + 1
     do while((e1 > tol) .and. (e2 > tol))
+        xant = gaussSeidel
         do i = 1, n
             sum = 0
             do j = 1, i - 1
@@ -228,7 +230,7 @@ program principal
     implicit none
 
     integer, parameter :: orden = 4
-    real(8) matriz(orden, orden), term_ind(orden, 1), sol(orden, 1), xini(orden, 1)
+    real(8) matriz(orden, orden), term_ind(orden, 1), xini(orden, 1)
 
     xini = 0
     call leerMatriz(matriz, "matriz_ejemplo1.txt")
@@ -237,8 +239,7 @@ program principal
     write(*, *)
     call mostrarMatriz(term_ind)
     write(*, *)
-    sol = gaussSeidel(matriz, term_ind, xini, 0.0001_8)
-    call mostrarMatriz(sol)
+    call mostrarMatriz(gaussSeidel(matriz, term_ind, xini, 0.000000000001_8))
 contains
 
 end program principal
