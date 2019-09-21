@@ -215,7 +215,7 @@ function refinamientoIter(matriz, term_ind, tol, metodo, norma)
     real(8) refinamientoIter(size(matriz, dim=1), size(term_ind, dim=2))
     real(8) error
 
-    refinamientoIter = matmul(metodo(matriz, term_ind))
+    refinamientoIter = metodo(matriz, term_ind)
     error = norma(residuo(matriz, refinamientoIter, term_ind))
     do while(error > tol)
         delta = error * matrizInversa(matriz)
