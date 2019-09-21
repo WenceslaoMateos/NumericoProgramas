@@ -9,6 +9,13 @@ module SELs
             real(8) metodoDirecto(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
         end function
     end interface
+
+    abstract interface
+        function solucionDirecto(matriz, term_ind)
+            real(8), dimension(:, :), intent(in) :: matriz, term_ind
+            real(8) solucionDirecto(size(term_ind, dim=1), size(term_ind, dim=2))
+        end function
+    end interface
     
     abstract interface
         function mNorma(matriz)
@@ -80,17 +87,18 @@ function solucionGauss(matriz, term_ind)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
     real(8) sol(size(term_ind, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
     real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionGauss
-    real(8), dimension(size(term_ind, dim=2)) :: valores
-    integer(4) i, j, filas, col
+    real(8), dimension(size(term_ind, dim=2)) :: sumatorias
+    integer(4) i, k, filas, colterm
 
     sol = gauss(matriz, term_ind)
     filas = size(matriz, dim=1)
-    col = size(matriz, dim=2)
-    do i = filas, 1, -1
-        valores = matmul(sol(i, :), term_ind)
-        sol(i, :) = (sol(i, :) - valores) / sol(i, i)
+    colterm = size(matriz, dim=2) + 1
+    solucionGauss(filas, :) = sol(filas, colterm:) / sol(filas, filas)
+    do i = filas - 1, 1, -1
+        k = i + 1
+        sumatorias = matmul(sol(i, k:colterm - 1), solucionGauss(k:, :))
+        solucionGauss(i, :) = (sol(i, colterm:) - sumatorias) / sol(i, i)
     end do
-    solucionGauss(:,:) = sol(:, size(matriz, dim=2) + 1:)
 end function solucionGauss
 
 function gaussJordan(matriz, term_ind)
@@ -120,7 +128,7 @@ function solucionGaussJordan(matriz, term_ind)
     do i = 1, filas
         sol(i, :) = sol(i, :) / sol(i, i)
     end do
-    solucionGaussJordan(:,:) = sol(:, size(matriz, dim=2) + 1:)
+    solucionGaussJordan(:, :) = sol(:, size(matriz, dim=2) + 1:)
 end function solucionGaussJordan
 
 function reduccionCrout(matriz)
@@ -209,13 +217,13 @@ end function thomas
 function refinamientoIter(matriz, term_ind, tol, metodo, norma)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
     real(8), intent(in) :: tol
-    procedure(metodoDirecto) :: metodo
+    procedure(solucionDirecto) :: metodo
     procedure(mNorma) :: norma 
     real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
     real(8) refinamientoIter(size(matriz, dim=1), size(term_ind, dim=2))
     real(8) error
 
-    refinamientoIter = matmul(metodo(matriz, term_ind))
+    refinamientoIter = metodo(matriz, term_ind)
     error = norma(residuo(matriz, refinamientoIter, term_ind))
     do while(error > tol)
         delta = error * matrizInversa(matriz)
@@ -419,7 +427,13 @@ program principal
     call mostrarMatriz(term_ind)
     write(*, *)
 
-    call mostrarMatriz(refinamientoIter(matriz, term_ind, 0.000000000001_8, gauss, mNormaM))
+    write(*, *) "Solucion Gauss:"
+    call mostrarMatriz(solucionGauss(matriz, term_ind))
+    write(*, *)
+
+    write(*, *) "Solucion Gauss iterativo:"
+    call mostrarMatriz(refinamientoIter(matriz, term_ind, 0.000000000001_8, solucionGauss, mNormaM))
+    write(*, *)
 
     call mostrarMatriz(jacobi(matriz, term_ind, xini, 0.000000000001_8))
     write(*, *)
