@@ -189,20 +189,21 @@ function thomas(u_o, d_o, l_o, term_ind)
     end do
 end function thomas
 
-function refinamientoIter(matriz, term_ind, tol, metodo)
+function refinamientoIter(matriz, term_ind, tol, metodo, norma)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
     real(8), intent(in) :: tol
     procedure(metodoDirecto) :: metodo
+    procedure(mNorma) :: norma 
     real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
     real(8) refinamientoIter(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
     real(8) error
 
     refinamientoIter = metodo(matriz, term_ind)
-    error = mNormaM(residuo(matriz, refinamientoIter, term_ind))
+    error = norma(residuo(matriz, refinamientoIter, term_ind))
     do while(error > tol)
         delta = error * matrizInversa(matriz)
         refinamientoIter = refinamientoIter - delta
-        error = mNormaM(residuo(matriz, refinamientoIter, term_ind))
+        error = norma(residuo(matriz, refinamientoIter, term_ind))
     end do
 end function refinamientoIter
 
@@ -400,6 +401,8 @@ program principal
     write(*, *)
     call mostrarMatriz(term_ind)
     write(*, *)
+
+    call mostrarMatriz(refinamientoIter(matriz, term_ind, 0.000000000001_8, gauss, mNormaM))
 
     call mostrarMatriz(jacobi(matriz, term_ind, xini, 0.000000000001_8))
     write(*, *)
