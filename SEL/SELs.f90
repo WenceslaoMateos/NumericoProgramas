@@ -148,6 +148,50 @@ function reduccionCrout(matriz)
     end do
  end function
 
+function thomas(u_o, d_o, l_o, term_ind)
+    real(8), dimension(:,:), intent(in) :: term_ind
+    real(8), dimension(:), intent(in) :: u_o, d_o, l_o
+    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: thomas
+    real(8), dimension(size(term_ind, dim=1)) :: u, d, l
+    integer(4) filas, i
+
+    filas = size(term_ind, DIM=1)
+    u = u_o
+    d = d_o
+    l = l_o
+    thomas = term_ind
+    do i = 1, filas - 1
+        u(i) = u(i) / d(i)
+        thomas(i, :) = thomas(i, :) / d(i)
+        d(i) = 1.0
+        d(i + 1) = d(i + 1) - l(i + 1) * u(i)
+        thomas(i + 1, :) = thomas(i + 1, :) - l(i + 1) * thomas(i, :)
+        l(i + 1) = 0.0
+    end do
+
+    thomas(filas, :) = thomas(filas, :) / d(filas)
+    do i = filas - 1, 1, -1
+        thomas(i, :) = thomas(i, :) - u(i) * thomas(i + 1, :) / d(i)
+    end do
+end function thomas
+
+function refinamientoIter(matriz, term_ind, tol, metodo)
+    real(8), dimension(:, :), intent(in) :: matriz, term_ind
+    real(8), intent(in) :: tol
+    real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
+    real(8) refinamientoIter(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
+    real(8) error
+
+    refinamientoIter = metodo(matriz, term_ind)
+    error = normaMatriz(residuo(matriz, refinamientoIter, term_ind))
+    do while(error > tol)
+        delta = error * matrizInversa(matriz)
+        refinamientoIter = refinamientoIter - delta
+        error = normaMatriz(residuo(matriz, refinamientoIter, term_ind))
+    end do
+end function refinamientoIter
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!! Metodos indirectos !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 function jacobi(matriz, term_ind, xini, tol)
