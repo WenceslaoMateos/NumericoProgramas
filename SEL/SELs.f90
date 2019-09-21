@@ -2,6 +2,19 @@ module SELs
 
     implicit none
 
+    abstract interface
+        function metodoDirecto(matriz, term_ind)
+            real(8), dimension(:, :), intent(in) :: matriz, term_ind
+            real(8) metodoDirecto(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
+        end function
+    end interface
+    
+    abstract interface
+        function mNorma(matriz)
+            real(8), dimension(:, :), intent(in) :: matriz
+            real(8) mNorma
+        end function
+    end interface
 contains
 
 function matrizAmpliada(matriz, term_ind)
@@ -219,7 +232,7 @@ function jacobi(matriz, term_ind, xini, tol)
             jacobi(i, :) = (term_ind(i, :) - sum) / matriz(i, i)
         end do
         e1 = maxval(abs(jacobi-xant))
-        e2 = normaMatriz(residuo(matriz, jacobi, term_ind))
+        e2 = mNormaM(residuo(matriz, jacobi, term_ind))
     end do
 end function jacobi
 
@@ -248,7 +261,7 @@ function gaussSeidel(matriz, term_ind, xini, tol)
             gaussSeidel(i, :) = (term_ind(i, :) - sum) / matriz(i, i)
         end do
         e1 = maxval(abs(gaussSeidel-xant))
-        e2 = normaMatriz(residuo(matriz, gaussSeidel, term_ind))
+        e2 = mNormaM(residuo(matriz, gaussSeidel, term_ind))
     end do
 end function gaussSeidel
 
@@ -280,22 +293,80 @@ function residuo(mat, sol, term_ind)
     real(8), intent(in) :: mat(:, :), sol(:, :), term_ind(:, :)
     real(8) residuo(size(mat, dim=1), size(mat, dim=2))
     
-    residuo = matmul(mat,sol) - term_ind
+    residuo = matmul(mat, sol) - term_ind
 end function residuo
 
-function normaMatriz(matriz)
-    intent(in) :: matriz
-    real(8) matriz(:, :), normaMatriz
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Medidas !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    normaMatriz = maxval(sum(abs(matriz), 2))
-end function normaMatriz
+function vNormaM(vector)
+    intent(in) :: vector
+    real(8) vector(:), vNormaM
 
-function condicion(matriz)
+    vNormaM = maxval(abs(vector))
+end function vNormaM
+
+function vNormaE(vector)
+    intent(in) :: vector
+    real(8) vector(:), vNormaE
+
+    vNormaE = sqrt(sum(vector**2))
+end function vNormaE
+
+function mNormaM(matriz)
     intent(in) :: matriz
+    real(8) matriz(:, :), mNormaM
+
+    mNormaM = maxval(sum(abs(matriz), dim=2))
+end function mNormaM
+
+function mNormaL(matriz)
+    intent(in) :: matriz
+    real(8) matriz(:, :), mNormaL
+
+    mNormaL = maxval(sum(abs(matriz), dim=1))
+end function mNormaL
+
+function mNormaF(matriz)
+    intent(in) :: matriz
+    real(8) matriz(:, :), mNormaF
+
+    mNormaF = sqrt(sum(matriz**2))
+end function mNormaF
+
+function condicion(matriz, norma)
+    intent(in) :: matriz
+    procedure(mNorma) :: norma
     real(8) matriz(:, :), condicion
 
-    condicion = normaMatriz(matriz) * normaMatriz(matrizInversa(matriz))
+    condicion = norma(matriz) * norma(matrizInversa(matriz))
 end function condicion
+
+function errorAbsoluto(A, Aper, norma)
+    real(8), dimension(:, :), intent(in) :: A, Aper
+    procedure(mNorma) :: norma
+    real(8) errorAbsoluto
+
+    errorAbsoluto = norma(A - Aper)
+end function errorAbsoluto
+
+function errorRelativo(A, Aper, norma)
+    real(8), dimension(:, :), intent(in) :: A, Aper
+    procedure(mNorma) :: norma
+    real(8) errorRelativo
+
+    errorRelativo = errorAbsoluto(A, Aper, norma) / norma(A)
+end function errorRelativo
+
+function cotaErrorRelativo(A, Aper, b, bper, norma)
+    real(8), dimension(:, :), intent(in) :: A, Aper, b, bper
+    procedure(mNorma) :: norma
+    real(8) cotaErrorRelativo, cond, erA, erb
+
+    cond = condicion(A, norma)
+    erA = errorRelativo(A, Aper, norma)
+    erb = errorRelativo(b, bper, norma)
+    cotaErrorRelativo = (cond / (1 - cond*erA)) * (erA + erb)
+end function cotaErrorRelativo
 
 end module SELs
 
@@ -315,6 +386,11 @@ program principal
     call mostrarMatriz(matriz)
     write(*, *)
     call mostrarMatriz(term_ind)
+    write(*, *)
+
+    write(*, *) "Norma M ", mNormaM(matriz)
+    write(*, *) "Norma L ", mNormaL(matriz)
+    write(*, *) "Norma F ", mNormaF(matriz)
     write(*, *)
 
     call pivotear(matriz, term_ind)
