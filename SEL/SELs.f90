@@ -217,7 +217,7 @@ end function thomas
 function refinamientoIter(matriz, term_ind, tol, metodo, norma)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
     real(8), intent(in) :: tol
-    procedure(solucionDirecto) :: metodo
+    procedure(solucionDirecto) :: metodo ! Tener en cuenta que solo necesita el valor de las incognitas
     procedure(mNorma) :: norma 
     real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
     real(8) refinamientoIter(size(matriz, dim=1), size(term_ind, dim=2))
