@@ -81,16 +81,15 @@ function solucionGauss(matriz, term_ind)
     real(8) sol(size(term_ind, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
     real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionGauss
     real(8), dimension(size(term_ind, dim=2)) :: valores
-    integer(4) i, j, filas, col
+    integer(4) i, filas, colterm
 
     sol = gauss(matriz, term_ind)
     filas = size(matriz, dim=1)
-    col = size(matriz, dim=2)
+    colterm = size(matriz, dim=2) +1
     do i = filas, 1, -1
         valores = matmul(sol(i, :), term_ind)
-        sol(i, :) = (sol(i, :) - valores) / sol(i, i)
+        solucionGauss(i, :) = (sol(i, colterm:) - valores) / sol(i, i)
     end do
-    solucionGauss(:,:) = sol(:, size(matriz, dim=2) + 1:)
 end function solucionGauss
 
 function gaussJordan(matriz, term_ind)
