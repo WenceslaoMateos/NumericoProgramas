@@ -76,6 +76,23 @@ function gauss(matriz, term_ind)
     end do 
 end function gauss
 
+function solucionGauss(matriz, term_ind)
+    real(8), dimension(:, :), intent(in) :: matriz, term_ind
+    real(8) sol(size(term_ind, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
+    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: solucionGauss
+    real(8), dimension(size(term_ind, dim=2)) :: valores
+    integer(4) i, j, filas, col
+
+    sol = gauss(matriz, term_ind)
+    filas = size(matriz, dim=1)
+    col = size(matriz, dim=2)
+    do i = filas, 1, -1
+        valores = matmul(sol(i, :), term_ind)
+        sol(i, :) = (sol(i, :) - valores) / sol(i, i)
+    end do
+    solucionGauss(:,:) = sol(:, size(matriz, dim=2) + 1:)
+end function solucionGauss
+
 function gaussJordan(matriz, term_ind)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
     real(8) gaussJordan(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
@@ -88,22 +105,22 @@ function gaussJordan(matriz, term_ind)
     do j = 2, columnas
         do i = 1, j - 1
             gaussJordan(i, :) = gaussJordan(i, :) - gaussJordan(j, :) * gaussJordan(i, j)  / gaussJordan(j, j)
-            gaussJordan(i, j) = 0.0
         end do
     end do 
 end function gaussJordan
 
 function solucionGaussJordan(matriz, term_ind)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
-    real(8) solucionGaussJordan(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
+    real(8) sol(size(term_ind, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
+    real(8) solucionGaussJordan(size(term_ind, dim=1), size(term_ind, dim=2))
     integer(4) i, filas
 
-    solucionGaussJordan = gaussJordan(matriz, term_ind)
+    sol = gaussJordan(matriz, term_ind)
     filas = size(matriz, dim=1)
     do i = 1, filas
-        solucionGaussJordan(i, :) = solucionGaussJordan(i, :) / solucionGaussJordan(i, i)
-        solucionGaussJordan(i, i) = 1.
+        sol(i, :) = sol(i, :) / sol(i, i)
     end do
+    solucionGaussJordan(:,:) = sol(:, size(matriz, dim=2) + 1:)
 end function solucionGaussJordan
 
 function reduccionCrout(matriz)
@@ -195,10 +212,10 @@ function refinamientoIter(matriz, term_ind, tol, metodo, norma)
     procedure(metodoDirecto) :: metodo
     procedure(mNorma) :: norma 
     real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
-    real(8) refinamientoIter(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
+    real(8) refinamientoIter(size(matriz, dim=1), size(term_ind, dim=2))
     real(8) error
 
-    refinamientoIter = metodo(matriz, term_ind)
+    refinamientoIter = matmul(metodo(matriz, term_ind))
     error = norma(residuo(matriz, refinamientoIter, term_ind))
     do while(error > tol)
         delta = error * matrizInversa(matriz)
