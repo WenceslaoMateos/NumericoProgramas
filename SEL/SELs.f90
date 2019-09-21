@@ -1,3 +1,4 @@
+!para compilar el modulo: gfortran -g -c modulo.f90
 module SELs
 
     implicit none
@@ -191,16 +192,17 @@ end function thomas
 function refinamientoIter(matriz, term_ind, tol, metodo)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind
     real(8), intent(in) :: tol
+    procedure(metodoDirecto) :: metodo
     real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
     real(8) refinamientoIter(size(matriz, dim=1), size(matriz, dim=2) + size(term_ind, dim=2))
     real(8) error
 
     refinamientoIter = metodo(matriz, term_ind)
-    error = normaMatriz(residuo(matriz, refinamientoIter, term_ind))
+    error = mNormaM(residuo(matriz, refinamientoIter, term_ind))
     do while(error > tol)
         delta = error * matrizInversa(matriz)
         refinamientoIter = refinamientoIter - delta
-        error = normaMatriz(residuo(matriz, refinamientoIter, term_ind))
+        error = mNormaM(residuo(matriz, refinamientoIter, term_ind))
     end do
 end function refinamientoIter
 
