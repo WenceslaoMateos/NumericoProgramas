@@ -19,14 +19,21 @@ subroutine cargarMatriz(A)
     end do
 end subroutine cargarMatriz
 
-subroutine mostrarMatriz(A)
+subroutine mostrarMatriz(A, formato)
     real(8), intent(in) :: A(:, :)
+    character(len=*), optional :: formato
     integer(4) i, filas
 
     filas = size(A, dim=1)
-    do i = 1, filas
-        write(*, *) A(i, :)
-    end do
+    if (present(formato)) then
+        do i = 1, filas
+            write(*, formato) A(i, :)
+        end do
+    else
+        do i = 1, filas
+            write(*, *) A(i, :)
+        end do
+    end if
 end subroutine mostrarMatriz
 
 subroutine leerMatriz(A, archivo)
@@ -69,10 +76,15 @@ subroutine cargarVector(V)
     end do
 end subroutine cargarVector
 
-subroutine mostrarVector(V)
+subroutine mostrarVector(V, formato)
     real(8), intent(in) :: v(:)
-    
-    write(*, *) V
+    character(len=*), optional :: formato
+
+    if (present(formato)) then
+        write(*, formato) V
+    else
+        write(*, *) V
+    end if
 end subroutine mostrarVector
 
 subroutine leerVector(V, archivo)
