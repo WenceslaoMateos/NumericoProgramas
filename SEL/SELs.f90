@@ -220,19 +220,18 @@ function refinamientoIter(matriz, term_ind, tol, metodo, norma)
     real(8), intent(in) :: tol
     procedure(solucionDirecto) :: metodo ! Tener en cuenta que solo necesita el valor de las incognitas
     procedure(mNorma) :: norma 
-    real(8), dimension(size(matriz, dim=1), size(matriz, dim=2)) :: delta
-    real(8) refinamientoIter(size(matriz, dim=1), size(term_ind, dim=2))
+    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: refinamientoIter, res
     real(8) error
 
     refinamientoIter = metodo(matriz, term_ind)
-    error = norma(residuo(matriz, refinamientoIter, term_ind))
-    do while(error > tol)
-        delta = error * matrizInversa(matriz)
-        refinamientoIter = refinamientoIter - delta
-        error = norma(residuo(matriz, refinamientoIter, term_ind))
+    res = residuo(matriz, refinamientoIter, term_ind)
+    error = norma(res)
+    do while (error > tol)
+        refinamientoIter = refinamientoIter - metodo(matriz, res)
+        res = residuo(matriz, refinamientoIter, term_ind)
+        error = norma(res)
     end do
 end function refinamientoIter
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! Metodos indirectos !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
