@@ -78,7 +78,7 @@ function gauss(matriz, term_ind)
     do j = 1, columnas - 1
         do i = j + 1, filas
             gauss(i, :) = gauss(i, :) - gauss(j, :) * gauss(i, j)  / gauss(j, j)
-            gauss(i, j) = 0.0
+            gauss(i, j) = 0.
         end do
     end do 
 end function gauss
@@ -113,6 +113,7 @@ function gaussJordan(matriz, term_ind)
     do j = 2, columnas
         do i = 1, j - 1
             gaussJordan(i, :) = gaussJordan(i, :) - gaussJordan(j, :) * gaussJordan(i, j)  / gaussJordan(j, j)
+            gaussJordan(i, j) = 0.
         end do
     end do 
 end function gaussJordan
