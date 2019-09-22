@@ -307,18 +307,11 @@ end function identidad
 
 function matrizInversa(matriz) ! Llamar solo con matrices cuadradas
     intent(in) :: matriz
-    integer(4) orden, i
-    real(8), allocatable :: aux(:, :)
+    integer(4) orden
     real(8) matriz(:, :), matrizInversa(size(matriz, dim=1), size(matriz, dim=2))
 
     orden = size(matriz, dim=1)
-    allocate(aux(orden, orden*2))
-    aux = gaussJordan(matriz, identidad(orden))
-    do i = 1, orden
-        aux(i, :) = aux(i, :) / aux(i, i)
-    end do
-    matrizInversa = aux(:, orden + 1:)
-    deallocate(aux)
+    matrizInversa = solucionGaussJordan(matriz, identidad(orden))
 end function
 
 function residuo(mat, sol, term_ind)
