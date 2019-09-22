@@ -142,7 +142,7 @@ function reduccionCrout(matriz)
     orden = size(matriz, dim=1)
     do i = 2, orden
         ! Calculo de la columna i de L
-        do fila = i + 1, orden
+        do fila = i, orden
             do k = 1, i - 1
                 reduccionCrout(fila, i) = reduccionCrout(fila, i) - reduccionCrout(fila, k) * reduccionCrout(k, i)
             end do
@@ -153,7 +153,6 @@ function reduccionCrout(matriz)
             do k = 1, i - 1
                 reduccionCrout(i, col) = reduccionCrout(i, col) - reduccionCrout(i, k) * reduccionCrout(k, col)
             end do
-        
             reduccionCrout(i, col) = reduccionCrout(i, col) / reduccionCrout(i, i)
         end do
     end do
