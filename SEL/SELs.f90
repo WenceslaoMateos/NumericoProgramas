@@ -307,13 +307,16 @@ end function identidad
 
 function matrizInversa(matriz) ! Llamar solo con matrices cuadradas
     intent(in) :: matriz
-    integer(4) orden
+    integer(4) orden, i
     real(8), allocatable :: aux(:, :)
     real(8) matriz(:, :), matrizInversa(size(matriz, dim=1), size(matriz, dim=2))
 
     orden = size(matriz, dim=1)
     allocate(aux(orden, orden*2))
-    aux = solucionGaussJordan(matriz, identidad(orden))
+    aux = gaussJordan(matriz, identidad(orden))
+    do i = 1, orden
+        aux(i, :) = aux(i, :) / aux(i, i)
+    end do
     matrizInversa = aux(:, orden + 1:)
     deallocate(aux)
 end function
@@ -406,7 +409,7 @@ program principal
     implicit none
 
     integer, parameter :: orden = 4
-    real(8) matriz(orden, orden), term_ind(orden, 1), xini(orden, 1)
+    real(8) matriz(orden, orden), term_ind(orden, 1), xini(orden, 1), matriz2(3, 3)
 
     xini = 0
     call leerMatriz(matriz, "matriz_ejemplo1.txt")
@@ -436,10 +439,31 @@ program principal
     call mostrarMatriz(refinamientoIter(matriz, term_ind, 0.000000000001_8, solucionGauss, mNormaM))
     write(*, *)
 
+    write(*, *) "Jacobi:"
     call mostrarMatriz(jacobi(matriz, term_ind, xini, 0.000000000001_8))
     write(*, *)
 
+    write(*, *) "Gauss Seidel:"
     call mostrarMatriz(gaussSeidel(matriz, term_ind, xini, 0.000000000001_8))
+    write(*, *)
+
+    matriz2(1, 1) = 1.
+    matriz2(1, 2) = 0.
+    matriz2(1, 3) = 0.
+    matriz2(2, 1) = 2.
+    matriz2(2, 2) = 1.
+    matriz2(2, 3) = 0.
+    matriz2(3, 1) = -1.
+    matriz2(3, 2) = -2.
+    matriz2(3, 3) = -1.
+    write(*, *) "Matriz original:"
+    call mostrarMatriz(matriz2)
+    write(*, *)
+    write(*, *) "Matriz inversa:"
+    call mostrarMatriz(matrizInversa(matriz2))
+    write(*, *)
+    write(*, *) "Chequeo matriz inversa:"
+    call mostrarMatriz(matmul(matriz2, matrizInversa(matriz2)))
 contains
 
 end program principal
