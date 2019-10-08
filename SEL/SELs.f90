@@ -266,26 +266,25 @@ end function jacobi
 function gaussSeidel(matriz, term_ind, xini, tol)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
     real(8), intent(in) :: tol
-    real(8), dimension(size(term_ind, dim = 1), size(term_ind, dim= 2 )) :: gaussSeidel, xant
-    real(8), dimension(size(term_ind, dim = 1)) :: sum
+    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: gaussSeidel, xant
     real(8) e1, e2
     integer(4) i, j, n
 
     gaussSeidel = xini
-    n = size(gaussSeidel, dim = 1)
+    n = size(gaussSeidel, dim=1)
     e1 = tol + 1
     e2 = tol + 1
     do while((e1 > tol) .and. (e2 > tol))
         xant = gaussSeidel
         do i = 1, n
-            sum = 0
+            gaussSeidel(i, :) = term_ind(i, :)
             do j = 1, i - 1
-                sum = sum + matriz(i, j) * gaussSeidel(j, :)
+                gaussSeidel(i, :) = gaussSeidel(i, :) - matriz(i, j) * gaussSeidel(j, :)
             end do
             do j = i + 1, n
-                sum = sum + matriz(i, j) * xant(j, :)
+                gaussSeidel(i, :) = gaussSeidel(i, :) - matriz(i, j) * gaussSeidel(j, :)
             end do
-            gaussSeidel(i, :) = (term_ind(i, :) - sum) / matriz(i, i)
+            gaussSeidel(i, :) = gaussSeidel(i, :) / matriz(i, i)
         end do
         e1 = maxval(abs(gaussSeidel-xant))
         e2 = mNormaM(residuo(matriz, gaussSeidel, term_ind))
