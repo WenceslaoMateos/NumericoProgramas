@@ -15,8 +15,8 @@ program principal
     x1 = 20.
     y0 = 0.
     y1 = 10.
-    n = 40
-    m = 20
+    n = 32
+    m = 16
     orden = (n - 1) * (m - 1)
 
     allocate(mat(1:orden, 1:orden), distribucion(1:m+1, 1:n+1))
@@ -28,7 +28,7 @@ program principal
     inferior = 0.
     izquierda = 0.
     derecha = 100.
-    call generarSistema(mat, term_ind, x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha)
+    call generarSistema(mat, term_ind, x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace)
     ! call mostrarMatriz(mat)
     ! write (*, *)
     ! call mostrarMatriz(term_ind)
@@ -45,5 +45,14 @@ program principal
     call system('gnuplot -persist matriz.p')
 
     deallocate(mat, distribucion, superior, inferior, izquierda, derecha, term_ind, xini, res)
+
+contains
+
+    function f(x, y)
+        real(8), intent(in) :: x, y
+        real(8) f
+
+        f = x / y
+    end function
 
 end program principal

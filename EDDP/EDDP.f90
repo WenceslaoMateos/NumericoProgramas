@@ -1,24 +1,48 @@
 module EDDP
     implicit none
+
+    abstract interface
+        function poisson(x, y)
+            real(8), intent(in) :: x, y
+            real(8) poisson
+        end function poisson
+    end interface
     
-    contains
+contains
+
+    function laplace(x, y)
+        real(8), intent(in) :: x, y
+        real(8) laplace
+
+        laplace = 0.
+    end function laplace
     
-    subroutine generarSistema(mat, term_ind, x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha)
+    subroutine generarSistema(mat, term_ind, x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha, f)
         integer(4), intent(in) :: nx, my
         real(8), intent(in) :: x0, x1, y0, y1
-        real(8), dimension(:,:), intent(out) :: mat, term_ind
+        real(8), dimension(:, :), intent(out) :: mat, term_ind
         real(8), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
-        integer(4) filas, columnas, desde, hasta, i, n, m
-        real(8) h, k
+        procedure(poisson) :: f
+        integer(4) desde, hasta, i, n, m
+        real(8) h, k, x, y
 
         h = (x1 - x0) / nx
         k = (y1 - y0) / my
         n = nx - 1
         m = my - 1
         mat = 0.
-        term_ind = 0. * h**2. * k**2
-        filas = size(mat, dim=1)
-        columnas = size(mat, dim=2)
+
+        x = x0
+        y = y1
+        do i = 1, size(term_ind, dim=1)
+            if (mod(i, n) == 1) then
+                x = x0 + h
+                y = y - k
+            else
+                x = x + h
+            end if
+            term_ind(i, :) = f(x, y) * h**2. * k**2
+        end do
 
         ! ---------------GENERACION DE TERMINOS INDEPENDIENTES--------------- !
         ! Condiciones superiores
