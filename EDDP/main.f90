@@ -5,7 +5,7 @@ program principal
 
     implicit none
     
-    integer(4), parameter :: n = 9, m = 5, orden = (n-2)*(m-2)
+    integer(4), parameter :: n = 14, m = 15, orden = (n-2)*(m-2)
     real(8), dimension(1:orden, 1:orden) :: mat
     real(8), dimension(1:n-2) :: superior, inferior
     real(8), dimension(1:m-2) :: izquierda, derecha
@@ -18,10 +18,8 @@ program principal
     izquierda = 0.
     derecha = 100.
     call generaMatriz(mat, term_ind, n-2, m-2, superior, inferior, izquierda, derecha)
-    
     xini = 0.
-    res = gaussSeidel(mat, term_ind, xini, 0.000000000001_8)
-    call mostrarMatriz(res)
+    res = gaussSeidel(mat, term_ind, xini, 0.1_8)
 
     ! Esquinas
     distribucion(1, 1) = 0.
@@ -40,7 +38,6 @@ program principal
         offset = offset + n - 2
     end do
 
-    call mostrarMatriz(distribucion, '(9F10.2)')
     call grabarMatriz(distribucion, 'valores.dat')
     call generarDatos(distribucion, 0._8, 20._8, 0._8, 10._8, n, m, 'valores.dat')
     call system('gnuplot -persist matriz.p')

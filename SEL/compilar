@@ -1,0 +1,4 @@
+gfortran -g -c ../arreglos.f90
+gfortran -g -c ./SELs.f90
+gfortran -g arreglos.o SELs.o main.f90 -o main
+./main

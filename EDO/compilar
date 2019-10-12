@@ -1,0 +1,3 @@
+gfortran -g -c ../EDO/EDO.f90
+gfortran -g EDO.o main.f90 -o main
+./main

@@ -1,4 +1,3 @@
-
 program principal
     use SELs
     use arreglos
