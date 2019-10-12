@@ -34,13 +34,7 @@
 # Workspace
 .vscode
 EDO/EDO
-datos.dat
-EDO/EDO Vectorizado
-EDO/EDO_Vectorizado_Enlace_Tardio
-Sels
-SELs
-compilar
 EDDP/EDDP
-EDDP/main
-matriz_ejemplo1.txt
 EDDP/valores.dat
+main
+EDO/datos.dat
