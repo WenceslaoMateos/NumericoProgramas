@@ -248,12 +248,15 @@ contains
         end do
     end function generarDistribucion
 
-    function generarDistribucion2(nx, my, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
+    function generarDistribucion2(nx, my, x0, x1, y0, y1, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
         integer(4), intent(in) :: nx, my
         type(condicion), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
-        real(8), intent(in) :: resul(1:(nx - 1) * (my - 1)), si, sd, ii, id
-        real(8) generarDistribucion2(1:my+1, 1:nx+1)
+        real(8), intent(in) :: resul(1:(nx - 1) * (my - 1)), si, sd, ii, id, x0, x1, y0, y1
+        real(8) generarDistribucion2(1:my+1, 1:nx+1), h, k
         integer(4) i, offset
+
+        h = (x1 - x0) / nx
+        k = (y1 - y0) / my
 
         ! Interno
         offset = 0
@@ -273,13 +276,13 @@ contains
             if (superior(i - 1)%tipo == DIRICHLET) then
                 generarDistribucion2(1, i) = superior(i - 1)%valor
             elseif (superior(i - 1)%tipo == NEUMANN) then
-                generarDistribucion2(1, i) = generarDistribucion2(3, i)
+                generarDistribucion2(1, i) = generarDistribucion2(3, i) + 2. * k * superior(i - 1)%valor
             end if
 
             if (inferior(i - 1)%tipo == DIRICHLET) then
                 generarDistribucion2(my + 1, i) = inferior(i - 1)%valor
             elseif (inferior(i - 1)%tipo == NEUMANN) then
-                generarDistribucion2(my + 1, i) = generarDistribucion2(my - 1, i)
+                generarDistribucion2(my + 1, i) = generarDistribucion2(my - 1, i) - 2. * k * inferior(i - 1)%valor
             end if
         end do
 
@@ -287,13 +290,13 @@ contains
             if (izquierda(i - 1)%tipo == DIRICHLET) then
                 generarDistribucion2(i, 1) = izquierda(i - 1)%valor
             elseif (izquierda(i - 1)%tipo == NEUMANN) then
-                generarDistribucion2(i, 1) = generarDistribucion2(i, 3)
+                generarDistribucion2(i, 1) = generarDistribucion2(i, 3) - 2. * h * izquierda(i - 1)%valor
             end if
 
             if (derecha(i - 1)%tipo == DIRICHLET) then
                 generarDistribucion2(i, nx + 1) = derecha(i - 1)%valor
             else if (derecha(i - 1)%tipo == NEUMANN) then
-                generarDistribucion2(i, nx + 1) = generarDistribucion2(i, nx - 1)
+                generarDistribucion2(i, nx + 1) = generarDistribucion2(i, nx - 1) + 2. * h * derecha(i - 1)%valor
             end if
         end do
     end function generarDistribucion2

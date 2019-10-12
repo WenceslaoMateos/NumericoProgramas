@@ -60,7 +60,8 @@ program principal
     ! distribucion = generarDistribucion(n, m, res(:, 1), 0._8, 100._8, 0._8, 100._8, superior, inferior, izquierda, derecha)
     ! call mostrarMatriz(distribucion)
 
-    distribucion = generarDistribucion2(n, m, res(:, 1), 0._8, 100._8, 0._8, 100._8, superior2, inferior2, izquierda2, derecha2)
+    distribucion = generarDistribucion2(n, m, x0, x1, y0, y1, res(:, 1), 0._8, &
+        100._8, 0._8, 100._8, superior2, inferior2, izquierda2, derecha2)
     call mostrarMatriz(distribucion, '(9F7.2)')
     call grabarDatos(distribucion, x0, x1, y0, y1, n, m, 'valores.dat')
     call system('gnuplot -persist matriz.p')
