@@ -1,6 +1,3 @@
-set autoscale
-unset log
-unset label
 set title "Distribución de Temperaturas en una placa rectangular"
 set xlabel "x"
 set ylabel "y"
