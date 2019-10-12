@@ -2,6 +2,6 @@
 
 Programas de la materia de Analisis Numerico de la UNMDP
 
-Autores: 
-    Pablos, Braulio
-    Mateos, Wenceslao
+Autores:
+    - Pablos, Braulio
+    - Mateos, Wenceslao
