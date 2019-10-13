@@ -1,12 +1,14 @@
 module EDDP
+    use SELs
+    use arreglos
     implicit none
 
     integer(4), parameter :: DIRICHLET = 0, NEUMANN = 1
 
-    type condicion
+    type frontera
         integer(4) tipo
         real(8) valor
-    end type condicion
+    end type frontera
 
     abstract interface
         function poisson(x, y)
@@ -14,9 +16,17 @@ module EDDP
             real(8) poisson
         end function poisson
     end interface
-    
+
+    abstract interface
+        function funr(dx, dt)
+            real(8), intent(in) :: dx, dt
+            real(8) funr
+        end function funr
+    end interface
+
 contains
 
+!--------------------------------ELIPTICAS--------------------------------!
     function laplace(x, y)
         real(8), intent(in) :: x, y
         real(8) laplace
@@ -28,7 +38,7 @@ contains
         integer(4), intent(in) :: nx, my
         real(8), intent(in) :: x0, x1, y0, y1
         real(8), dimension(:, :), intent(out) :: mat, term_ind
-        type(condicion), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
+        type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
         procedure(poisson) :: f
         integer(4) desde, hasta, i, n, m, offset
         real(8) h, k, x, y
@@ -140,7 +150,7 @@ contains
 
     function generarDistribucion(nx, my, x0, x1, y0, y1, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
         integer(4), intent(in) :: nx, my
-        type(condicion), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
+        type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
         real(8), intent(in) :: resul(1:(nx - 1) * (my - 1)), si, sd, ii, id, x0, x1, y0, y1
         real(8) generarDistribucion(1:my+1, 1:nx+1), h, k
         integer(4) i, offset
@@ -212,5 +222,122 @@ contains
         end do
         close(2, status='KEEP')
     end subroutine
+
+!--------------------------------PARABOLICAS--------------------------------!
+
+    subroutine explicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
+        real(8), intent(in) :: t0, x0, xf, tf
+        type(frontera), intent(in) :: ci, cd
+        integer(4), intent(in) :: particionx, particiont
+        real(8), dimension(particionx - 1), intent(in) :: iniciales
+        real(8), dimension(particionx + 2) :: x
+        character(len=*), intent(in) :: archivo
+        procedure(funr) :: erre
+        real(8), dimension(size(iniciales) + 2) :: uant, u
+        real(8) t, r, dt, dx
+        integer(4) n, i
+
+        !escitura inicial en el archivo
+        open(2, FILE=archivo)
+        dx = (xf - x0) / particionx
+        x(1) =  0.
+        x(2) = x0
+        do i = 3, particionx + 2
+            x(i) = x(i-1) + dx
+        end do
+        write(2, *) x
+        write(2, *)
+
+        !core de metodo explicito
+        n = size(iniciales) + 2
+        u(1) = ci%valor
+        u(n) = cd%valor
+        u(2: n-1) = iniciales
+        t = t0
+        write(2, *) t, u
+
+        dt = (tf - t0) / particiont
+        r = erre(dx, dt)
+        do while(t <= tf)
+            t = t + dt
+            uant = u
+            u(1) = ci%valor
+            u(n) = cd%valor
+            do i = 2, n-1
+                u(i) = r * (uant(i+1) + uant(i-1)) + (1 - 2 * r) * uant(i)
+            end do
+            write(2, *) t, u
+        end do
+        close(2)
+    end subroutine explicito
+
+    subroutine implicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
+        real(8), intent(in) :: t0, x0, xf, tf
+        type(frontera), intent(in) :: ci, cd
+        integer(4), intent(in) :: particionx, particiont
+        real(8), dimension(particionx - 1), intent(in) :: iniciales
+        real(8), dimension(particionx + 2) :: x
+        character(len=*), intent(in) :: archivo
+        procedure(funr) :: erre
+        real(8), dimension(size(iniciales) + 2, 1) :: uant, u
+        real(8), dimension(particionx - 1, particionx - 1) :: matriz
+        real(8), dimension(particionx - 1, 1) :: term_ind
+        real(8) t, r, dt, dx
+        integer(4) n, i
+        
+        !escitura inicial en el archivo
+        open(2, FILE=archivo)
+        dx = (xf - x0) / particionx
+        x(1) =  0.
+        x(2) = x0
+        do i = 3, particionx + 2
+            x(i) = x(i-1) + dx
+        end do
+        write(2, *) x
+        write(2, *)
+
+        n = size(iniciales) + 2
+        u(1, 1) = ci%valor
+        u(n, 1) = cd%valor
+        u(2:n-1 ,1) = iniciales
+        t = t0
+        write(2, *) t, u(:, 1)
+        
+        dt = (tf - t0) / particiont
+        r = erre(dx, dt)
+        matriz = 0.
+        !banda central
+        do i = 1, n-2
+            matriz(i, i) = 2 + 2 * r
+        end do
+        ! banda derecha
+        do i = 1, n-3
+            matriz(i, i+1) = -r
+        end do
+        ! banda izquierda
+        do i = 2, n-2
+            matriz(i, i-1) = -r
+        end do
+        call mostrarMatriz(matriz)
+        write(*,*)
+        do while(t <= tf)
+            t = t + dt
+            uant = u
+            term_ind = 0.
+            term_ind(1, 1) = r * ci%valor 
+            term_ind(n-2, 1) = r * cd%valor
+            !terminos independientes
+            do i = 1, n-2
+                term_ind(i, 1) = term_ind(i, 1) + r * uant(i, 1) + (2 - 2 * r) * uant(i+1, 1) + r * uant(i+2, 1)
+            end do
+            call mostrarMatriz(term_ind)
+            write(*,*)
+            u(2:n-1, :) = gaussSeidel(matriz, term_ind, uant(2:n-1, :), 0.0001_8)
+            write(2, *) t, u(:, 1)
+        end do
+        close(2)
+    end subroutine implicito
+
+!--------------------------------HIPERBOLICAS--------------------------------!
 
 end module EDDP
