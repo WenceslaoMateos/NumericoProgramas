@@ -268,12 +268,13 @@ function gaussSeidel(matriz, term_ind, xini, tol)
     real(8), intent(in) :: tol
     real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: gaussSeidel, xant
     real(8) e1, e2
-    integer(4) i, j, n
+    integer(4) i, j, n, cont
 
     gaussSeidel = xini
     n = size(gaussSeidel, dim=1)
     e1 = tol + 1
     e2 = tol + 1
+    cont = 0
     do while((e1 > tol) .and. (e2 > tol))
         xant = gaussSeidel
         do i = 1, n
@@ -286,10 +287,46 @@ function gaussSeidel(matriz, term_ind, xini, tol)
             end do
             gaussSeidel(i, :) = gaussSeidel(i, :) / matriz(i, i)
         end do
-        e1 = maxval(abs(gaussSeidel-xant))
+        e1 = errorRelativo(gaussSeidel, xant, mNormaM)
         e2 = mNormaM(residuo(matriz, gaussSeidel, term_ind))
+        cont = cont + 1
     end do
+    write(*, *) "Itereaciones: ", cont
 end function gaussSeidel
+
+function relajacion(matriz, term_ind, xini, tol, omega)
+    real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
+    real(8), intent(in) :: tol, omega
+    real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: relajacion, xant, r
+    real(8) e1, e2
+    integer(4) i, j, n, cont
+
+    relajacion = xini
+    n = size(relajacion, dim=1)
+    e1 = tol + 1
+    e2 = tol + 1
+    cont = 0
+    do while((e1 > tol) .and. (e2 > tol))
+        xant = relajacion
+        do i = 1, n
+            relajacion(i, :) = term_ind(i, :)
+            do j = 1, i - 1
+                relajacion(i, :) = relajacion(i, :) - matriz(i, j) * relajacion(j, :)
+            end do
+            do j = i + 1, n
+                relajacion(i, :) = relajacion(i, :) - matriz(i, j) * relajacion(j, :)
+            end do
+            relajacion(i, :) = relajacion(i, :) / matriz(i, i)
+        end do
+        r = relajacion - xant
+        relajacion = xant + omega * r
+        ! relajacion = relajacion * omega + (1 - omega) * xant
+        ! e1 = errorRelativo(relajacion, xant, mNormaM)
+        e2 = mNormaM(residuo(matriz, relajacion, term_ind))
+        cont = cont + 1
+    end do
+    write(*, *) "Itereaciones: ", cont
+end function relajacion
 
 function identidad(orden)
     integer(4), intent(in) :: orden
