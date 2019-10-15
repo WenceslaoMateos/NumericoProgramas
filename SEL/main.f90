@@ -43,6 +43,10 @@ program principal
     call mostrarMatriz(gaussSeidel(matriz, term_ind, xini, 0.000000000001_8))
     write(*, *)
 
+    write(*, *) "Relajacion:"
+    call mostrarMatriz(relajacion(matriz, term_ind, xini, 0.000000000001_8, 1.2_8))
+    write(*, *)
+
     matriz2(1, 1) = 1.
     matriz2(1, 2) = 0.
     matriz2(1, 3) = 0.
