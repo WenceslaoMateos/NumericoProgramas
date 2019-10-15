@@ -271,7 +271,7 @@ contains
         close(2)
     end subroutine explicito
 
-    subroutine implicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
+    subroutine implicitoThomas(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
         real(8), intent(in) :: t0, x0, xf, tf
         type(frontera), intent(in) :: ci, cd
         integer(4), intent(in) :: particionx, particiont
@@ -280,7 +280,6 @@ contains
         character(len=*), intent(in) :: archivo
         procedure(funr) :: erre
         real(8), dimension(size(iniciales) + 2, 1) :: uant, u
-        real(8), dimension(particionx - 1, particionx - 1) :: matriz
         real(8), dimension(particionx - 1, 1) :: term_ind
         real(8), dimension(particionx - 1) :: u_o, d_o, l_o
         real(8) t, r, dt, dx
@@ -304,14 +303,62 @@ contains
         t = t0
         write(2, *) t, u(:, 1)
         
-        !u_o = 2 + 2 * r
-        !d_o = -r
-        !d_o(1) = 0.
-        !d_o(particionx - 1) = 0.
-        !l_o = -r
-        !l_o(1) = 0.
-        !l_o(particionx - 1) = 0.
+        
+        dt = (tf - t0) / particiont
+        r = erre(dx, dt)
+        d_o = 2 + 2 * r
+        u_o = -r
+        u_o(particionx - 1) = 0.
+        l_o = -r
+        l_o(1) = 0.
+        do while(t <= tf)
+            t = t + dt
+            uant = u
+            term_ind = 0.
+            term_ind(1, 1) = r * ci%valor 
+            term_ind(n-2, 1) = r * cd%valor
+            !terminos independientes
+            do i = 1, n-2
+                term_ind(i, 1) = term_ind(i, 1) + r * uant(i, 1) + (2 - 2 * r) * uant(i+1, 1) + r * uant(i+2, 1)
+            end do
+            u(2:n-1, :) = thomas(u_o, d_o, l_o, term_ind)
+            write(2, *) t, u(:, 1)
+        end do
+        close(2)
+    end subroutine implicitoThomas
 
+    subroutine implicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
+        real(8), intent(in) :: t0, x0, xf, tf
+        type(frontera), intent(in) :: ci, cd
+        integer(4), intent(in) :: particionx, particiont
+        real(8), dimension(particionx - 1), intent(in) :: iniciales
+        real(8), dimension(particionx + 2) :: x
+        character(len=*), intent(in) :: archivo
+        procedure(funr) :: erre
+        real(8), dimension(size(iniciales) + 2, 1) :: uant, u
+        real(8), dimension(particionx - 1, particionx - 1) :: matriz
+        real(8), dimension(particionx - 1, 1) :: term_ind
+        real(8) t, r, dt, dx
+        integer(4) n, i
+        
+        !escitura inicial en el archivo
+        open(2, FILE=archivo)
+        dx = (xf - x0) / particionx
+        x(1) =  0.
+        x(2) = x0
+        do i = 3, particionx + 2
+            x(i) = x(i-1) + dx
+        end do
+        write(2, *) x
+        write(2, *)
+
+        n = size(iniciales) + 2
+        u(1, 1) = ci%valor
+        u(n, 1) = cd%valor
+        u(2:n-1 ,1) = iniciales
+        t = t0
+        write(2, *) t, u(:, 1)
+        
         dt = (tf - t0) / particiont
         r = erre(dx, dt)
         matriz = 0.
@@ -339,13 +386,11 @@ contains
             end do
             call mostrarMatriz(term_ind)
             write(*,*)
-            !u(2:n-1, :) = thomas(u_o, d_o, l_o, term_ind)
             u(2:n-1, :) = gaussSeidel(matriz, term_ind, uant(2:n-1, :), 0.0001_8)
             write(2, *) t, u(:, 1)
         end do
         close(2)
     end subroutine implicito
-
 !--------------------------------HIPERBOLICAS--------------------------------!
 
 end module EDDP
