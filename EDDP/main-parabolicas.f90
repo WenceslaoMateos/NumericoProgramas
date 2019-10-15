@@ -25,7 +25,6 @@ program principal
     iniciales(:) = [2., 2., 2., 2.]
     archivo = 'resultados.dat'
 
-    
     call implicito(iniciales, ci, cd, x0, xf, t0, tf, r, particionx, particiont, archivo)
     
     contains
