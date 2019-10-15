@@ -294,15 +294,19 @@ function gaussSeidel(matriz, term_ind, xini, tol)
     write(*, *) "Itereaciones: ", cont
 end function gaussSeidel
 
-function relajacion(matriz, term_ind, xini, tol, omega)
+function relajacion(matriz, term_ind, xini, tol)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
-    real(8), intent(in) :: tol, omega
+    real(8), intent(in) :: tol
     real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: relajacion, xant, r
-    real(8) e1, e2
-    integer(4) i, j, n, cont
+    real(8), parameter :: PI = 3.141592653589793238462643383279502884197169399375
+    real(8) e1, e2, omega
+    integer(4) i, j, n, cont, m
 
     relajacion = xini
-    n = size(relajacion, dim=1)
+    n = size(matriz, dim=1)
+    m = size(matriz, dim=2)
+    omega = (4./(2.+sqrt(4.-(cos(PI/(m-1.))+cos(PI/(n-1.)))**2)))
+    write(*,*) 'Omega = ',omega
     e1 = tol + 1
     e2 = tol + 1
     cont = 0
@@ -320,8 +324,8 @@ function relajacion(matriz, term_ind, xini, tol, omega)
         end do
         r = relajacion - xant
         relajacion = xant + omega * r
-        ! relajacion = relajacion * omega + (1 - omega) * xant
-        ! e1 = errorRelativo(relajacion, xant, mNormaM)
+        !relajacion = relajacion * omega + (1 - omega) * xant
+        e1 = errorRelativo(relajacion, xant, mNormaM)
         e2 = mNormaM(residuo(matriz, relajacion, term_ind))
         cont = cont + 1
     end do
