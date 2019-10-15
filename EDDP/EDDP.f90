@@ -282,6 +282,7 @@ contains
         real(8), dimension(size(iniciales) + 2, 1) :: uant, u
         real(8), dimension(particionx - 1, particionx - 1) :: matriz
         real(8), dimension(particionx - 1, 1) :: term_ind
+        real(8), dimension(particionx - 1) :: u_o, d_o, l_o
         real(8) t, r, dt, dx
         integer(4) n, i
         
@@ -303,6 +304,14 @@ contains
         t = t0
         write(2, *) t, u(:, 1)
         
+        !u_o = 2 + 2 * r
+        !d_o = -r
+        !d_o(1) = 0.
+        !d_o(particionx - 1) = 0.
+        !l_o = -r
+        !l_o(1) = 0.
+        !l_o(particionx - 1) = 0.
+
         dt = (tf - t0) / particiont
         r = erre(dx, dt)
         matriz = 0.
@@ -318,8 +327,6 @@ contains
         do i = 2, n-2
             matriz(i, i-1) = -r
         end do
-        call mostrarMatriz(matriz)
-        write(*,*)
         do while(t <= tf)
             t = t + dt
             uant = u
@@ -332,6 +339,7 @@ contains
             end do
             call mostrarMatriz(term_ind)
             write(*,*)
+            !u(2:n-1, :) = thomas(u_o, d_o, l_o, term_ind)
             u(2:n-1, :) = gaussSeidel(matriz, term_ind, uant(2:n-1, :), 0.0001_8)
             write(2, *) t, u(:, 1)
         end do
