@@ -303,7 +303,6 @@ contains
         t = t0
         write(2, *) t, u(:, 1)
         
-        
         dt = (tf - t0) / particiont
         r = erre(dx, dt)
         d_o = 2 + 2 * r
@@ -378,14 +377,12 @@ contains
             t = t + dt
             uant = u
             term_ind = 0.
-            term_ind(1, 1) = r * ci%valor 
+            term_ind(1, 1) = r * ci%valor
             term_ind(n-2, 1) = r * cd%valor
             !terminos independientes
             do i = 1, n-2
                 term_ind(i, 1) = term_ind(i, 1) + r * uant(i, 1) + (2 - 2 * r) * uant(i+1, 1) + r * uant(i+2, 1)
             end do
-            call mostrarMatriz(term_ind)
-            write(*,*)
             u(2:n-1, :) = gaussSeidel(matriz, term_ind, uant(2:n-1, :), 0.0001_8)
             write(2, *) t, u(:, 1)
         end do

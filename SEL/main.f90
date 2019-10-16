@@ -44,7 +44,7 @@ program principal
     write(*, *)
 
     write(*, *) "Relajacion:"
-    call mostrarMatriz(relajacion(matriz, term_ind, xini, 0.000000000001_8, 1.2_8))
+    call mostrarMatriz(relajacion(matriz, term_ind, xini, 0.000000000001_8))
     write(*, *)
 
     matriz2(1, 1) = 1.
