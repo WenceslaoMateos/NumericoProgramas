@@ -6,8 +6,8 @@ program main
     real(8), dimension(0:3) :: x, y
     real(8), dimension(0:3) :: lagrange
     
-    x = [-4._8, -2._8, 0._8, 2._8]
-    y = [-7.38_8, 0.52_8, 2._8, 14.52_8]
+    x = [-4., -2., 0., 2.]
+    y = [-7.38, 0.52, 2., 14.52]
     lagrange = polinomioLagrange(x, y)
-    write(*, *) lagrange
+    write(*, '(4F10.5)') lagrange
 end program main

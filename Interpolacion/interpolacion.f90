@@ -20,28 +20,26 @@ contains
     function polinomioLagrange(x, y)
         real(8), dimension(0:), intent(in) :: x, y
         real(8), dimension(0:ubound(x, 1)) :: polinomioLagrange
-        real(8), dimension(0:1) :: binomio
-        real(8), dimension(:), allocatable :: ant, act
+        real(8), dimension(:), allocatable :: aux
         real(8) denominador
         integer(4) orden, k, i
 
-        orden = size(x) - 1
+        orden = ubound(x, 1)
         polinomioLagrange = 0.
         do k = 0, orden
             denominador = 1.
-            act = [1.]
-            do i = 0, orden
-                if (i /= k) then
-                    ant = act
-                    binomio = [-x(i), 1._8]
-                    denominador = denominador * (x(k) - x(i))
-                    act = productoPolinomios(ant, binomio)
-                end if
+            aux = [1.]
+            do i = 0, k - 1
+                denominador = denominador * (x(k) - x(i))
+                aux = productoPolinomios(aux, [-x(i), 1._8])
             end do
-            polinomioLagrange = polinomioLagrange + act * y(k) / denominador
+            do i = k + 1, orden
+                denominador = denominador * (x(k) - x(i))
+                aux = productoPolinomios(aux, [-x(i), 1._8])
+            end do
+            polinomioLagrange = polinomioLagrange + aux * y(k) / denominador
         end do
-        deallocate(ant)
-        deallocate(act)
+        deallocate(aux)
     end function polinomioLagrange
 
 end module interpolacion
