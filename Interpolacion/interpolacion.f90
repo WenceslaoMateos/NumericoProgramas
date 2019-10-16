@@ -33,17 +33,15 @@ contains
             do i = 0, orden
                 if (i /= k) then
                     ant = act
-                    deallocate(act)
-                    allocate(act(0:size(ant)))
                     binomio = [-x(i), 1._8]
                     denominador = denominador * (x(k) - x(i))
                     act = productoPolinomios(ant, binomio)
-                    deallocate(ant)
                 end if
             end do
             polinomioLagrange = polinomioLagrange + act * y(k) / denominador
-            deallocate(act)
         end do
+        deallocate(ant)
+        deallocate(act)
     end function polinomioLagrange
 
 end module interpolacion
