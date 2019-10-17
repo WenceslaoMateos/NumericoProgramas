@@ -238,7 +238,6 @@ function jacobi(matriz, term_ind, xini, tol)
     real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
     real(8), intent(in) :: tol
     real(8), dimension(size(term_ind, dim = 1), size(term_ind, dim= 2 )) :: jacobi, xant
-    real(8), dimension(size(term_ind, dim = 1)) :: sum
     real(8) e1, e2
     integer(4) i, j, n
 
@@ -249,14 +248,14 @@ function jacobi(matriz, term_ind, xini, tol)
     do while((e1 > tol) .and. (e2 > tol))
         xant = jacobi
         do i = 1, n
-            sum = 0
+            jacobi(i, :) = term_ind(i, :)
             do j = 1, i - 1
-                sum = sum + matriz(i, j) * xant(j, :)
+                jacobi(i, :) = jacobi(i, :) - matriz(i, j) * xant(j, :)
             end do
             do j = i + 1, n
-                sum = sum + matriz(i, j) * xant(j, :)
+                jacobi(i, :) = jacobi(i, :) - matriz(i, j) * xant(j, :)
             end do
-            jacobi(i, :) = (term_ind(i, :) - sum) / matriz(i, i)
+            jacobi(i, :) = jacobi(i, :) / matriz(i, i)
         end do
         e1 = maxval(abs(jacobi-xant))
         e2 = mNormaM(residuo(matriz, jacobi, term_ind))
