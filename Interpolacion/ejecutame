@@ -1,3 +1,5 @@
+gfortran -g -c ../SEL/SELs.f90
+gfortran -g -c ../arreglos.f90
 gfortran -g -c interpolacion.f90
-gfortran -g interpolacion.o $1 -o $(basename $1 .f90)
-./$(basename $1 .f90)
+gfortran -g arreglos.o SELs.o interpolacion.o  main.f90 -o main
+./main
