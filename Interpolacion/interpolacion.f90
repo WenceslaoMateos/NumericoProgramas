@@ -137,10 +137,10 @@ contains
         
         orden = ubound(x, 1)
         cantDif = orden
-        s = (xdesco - x(0))/(x(1) - x(0))
+        s = (xdesco - x(orden))/(x(1) - x(0))
         acum = 1.
         diferencias = y
-        equiespaciadoDescendente = y(0)
+        equiespaciadoDescendente = y(orden)
         fact = 1.
         do i = 1, orden
             cantDif = cantDif - 1

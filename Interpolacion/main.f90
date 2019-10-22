@@ -6,7 +6,7 @@ program main
     real(8), dimension(0:3) :: x, y, lagrange, polinomioDescendente, polinomioAscendente, directo
     real(8) xdesco
     
-    xdesco = 4.
+    xdesco = 5.
     !x = [-4., -2., 0., 2.]
     !y = [-7.38, 0.52, 2., 14.52]
     x = [0., 2., 4., 6.]
