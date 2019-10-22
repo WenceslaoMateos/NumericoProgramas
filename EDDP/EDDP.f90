@@ -10,6 +10,18 @@ module EDDP
         real(8) valor
     end type frontera
 
+    type frontera2
+        integer(4) tipo
+        procedure(funcionContorno), pointer, nopass :: valor
+    end type frontera2
+    
+    abstract interface
+        function funcionContorno(x, t, algo)
+            real(8), intent(in) :: x, t, algo
+            real(8) funcionContorno
+        end function funcionContorno
+    end interface
+
     abstract interface
         function poisson(x, y)
             real(8), intent(in) :: x, y
@@ -227,7 +239,7 @@ contains
 
     subroutine explicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
         real(8), intent(in) :: t0, x0, xf, tf
-        type(frontera), intent(in) :: ci, cd
+        type(frontera2), intent(in) :: ci, cd
         integer(4), intent(in) :: particionx, particiont
         real(8), dimension(particionx - 1), intent(in) :: iniciales
         real(8), dimension(particionx + 2) :: x
@@ -237,7 +249,7 @@ contains
         real(8) t, r, dt, dx
         integer(4) n, i
 
-        !escitura inicial en el archivo
+        !escritura inicial en el archivo
         open(2, FILE=archivo)
         dx = (xf - x0) / particionx
         x(1) =  0.
@@ -250,9 +262,7 @@ contains
 
         !core de metodo explicito
         n = size(iniciales) + 2
-        u(1) = ci%valor
-        u(n) = cd%valor
-        u(2: n-1) = iniciales
+        u(1: n) = iniciales
         t = t0
         write(2, *) t, u
 
@@ -261,8 +271,20 @@ contains
         do while(t <= tf)
             t = t + dt
             uant = u
-            u(1) = ci%valor
-            u(n) = cd%valor
+            if (ci%tipo == DIRICHLET) then
+                u(1) = ci%valor(x0, t)
+            else
+                !calculo el punto fantasma por la discretizacion de la funcion de neumann
+                !con el punto fantasma y la funcion cadorcha de explicitas podemos calcular el borde
+                u(i) = r * (uant(i+1) + ci%valor(x0, t)) + (1 - 2 * r) * uant(i)
+            endif
+            if (ci%tipo == DIRICHLET) then
+                u(n) = cd%valor(xf, t)
+            else
+                !calculo el punto fantasma por la discretizacion de la funcion de neumann
+                !con el punto fantasma y la funcion cadorcha de explicitas podemos calcular el borde
+                u(i) = r * (cd%valor(xf, t) + uant(i-1)) + (1 - 2 * r) * uant(i)
+            endif
             do i = 2, n-1
                 u(i) = r * (uant(i+1) + uant(i-1)) + (1 - 2 * r) * uant(i)
             end do

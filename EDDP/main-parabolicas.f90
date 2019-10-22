@@ -6,21 +6,22 @@ program principal
     implicit none
 
     real(8) t0, x0, xf, tf
-    type(frontera) ci, cd
+    type(frontera2) ci, cd
+    !type(frontera) ci, cd
     integer(4) particionx, particiont
     real(8), dimension(:), allocatable :: iniciales
     character(len=20) archivo
 
-    particionx = 5
+    particionx = 0.01
     particiont = 4
-    ci%tipo = DIRICHLET
-    ci%valor = 0
-    cd%tipo = DIRICHLET
-    cd%valor = 10
+    ci%tipo = NEUMANN
+    ci%valor => contornoI
+    cd%tipo = NEUMANN
+    cd%valor => contornoD
     t0 = 0.
     x0 = 0.
     tf = 537.6
-    xf = 20
+    xf = 0.1
     allocate(iniciales(particionx - 1))
     iniciales(:) = [2., 2., 2., 2.]
     archivo = 'resultados.dat'
@@ -31,10 +32,25 @@ program principal
 
     function r(dx, dt)
         real(8), intent(in) :: dx, dt
-        real(8) r
+        real(8) r, alfa
 
-        r = 1.
+        alfa = 6.94e-6
+        r = alfa * dt / (dx**2)
     end function r
+
+    function contornoI(x, t, algo)
+        real(8), intent(in) :: x, t, algo
+        real(8) contornoI
+
+        contornoI = algo
+    end function contornoI
+
+    function contornoD(x, t, algo)
+        real(8), intent(in) :: x, t, algo
+        real(8) contornoD
+
+        contornoD = 
+    end function contornoD
 
     subroutine plot(archivo)
         character(len=*), intent(in) :: archivo

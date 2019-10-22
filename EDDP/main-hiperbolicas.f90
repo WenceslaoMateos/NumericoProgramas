@@ -8,7 +8,7 @@ program principal
     real(8) x0, x1, y0, y1
     integer(4) n, m, orden
     real(8), dimension(:, :), allocatable :: mat, distribucion
-    type(condicion), dimension(:), allocatable :: superior, inferior, izquierda, derecha
+    type(frontera), dimension(:), allocatable :: superior, inferior, izquierda, derecha
     real(8), dimension(:, :), allocatable :: term_ind, xini, res
 
     x0 = 0.
