@@ -14,6 +14,22 @@ module EDDP
         integer(4) tipo
         procedure(funcionContorno), pointer, nopass :: valor
     end type frontera2
+
+    type ProblemaParabolicas
+        real(8) t0, tf, dt, x0, xf, dx
+        integer(4) particionx, particiont
+        real(8), dimension(:), allocatable :: iniciales, u
+        procedure(discretizacionParabolicas), pointer, nopass :: calculoInterno, calculoIzquierda, calculoDerecha
+    end type ProblemaParabolicas
+
+    abstract interface
+        function discretizacionParabolicas(pp, i)
+            import ProblemaParabolicas
+            type(ProblemaParabolicas), intent(in) :: pp
+            integer(4), intent(in) :: i
+            real(8) discretizacionParabolicas
+        end function
+    end interface
     
     abstract interface
         function funcionContorno(x, t, algo)
@@ -237,9 +253,83 @@ contains
 
 !--------------------------------PARABOLICAS--------------------------------!
 
+    function ejemploDiscretizacion(pp, i)
+        type(ProblemaParabolicas), intent(in) :: pp
+        integer(4), intent(in) :: i
+        real(8) ejemploDiscretizacion
+        real(8), parameter :: r = 0.5
+
+        ejemploDiscretizacion = r * (pp%u(i + 1) + pp%u(i - 1)) + (1 - 2 * r) * pp%u(i)
+    end function
+
+    function formularProblemaParabolicas(x0, xf, particionx, t0, tf, particiont, &
+            iniciales, calculoInterno, calculoIzquierda, calculoDerecha)
+        real(8), intent(in) :: x0, xf, t0, tf, iniciales(:)
+        integer(4), intent(in) :: particionx, particiont
+        procedure(discretizacionParabolicas) calculoInterno, calculoIzquierda, calculoDerecha
+        type(ProblemaParabolicas) pp, formularProblemaParabolicas
+
+        pp%x0 = x0
+        pp%xf = xf
+        pp%particionx = particionx
+        pp%dx = (xf - x0) / particionx
+
+        pp%t0 = t0
+        pp%tf = tf
+        pp%particiont = particiont
+        pp%dt = (tf - t0) / particiont
+
+        pp%iniciales = iniciales
+
+        pp%calculoInterno => calculoInterno
+        pp%calculoIzquierda => calculoIzquierda
+        pp%calculoDerecha => calculoDerecha
+
+        formularProblemaParabolicas = pp
+    end function
+
+    subroutine explicito2(pp, archivo)
+        type(ProblemaParabolicas), intent(inout) :: pp
+        character(len=*), intent(in) :: archivo
+        real(8), dimension(pp%particionx + 2) :: x
+        real(8), dimension(size(pp%iniciales)) :: usig
+        real(8) t
+        integer(4) n, i
+
+        !escritura inicial en el archivo
+        open(2, FILE=archivo)
+        pp%dx = (pp%xf - pp%x0) / pp%particionx
+        x(1) =  0.
+        x(2) = pp%x0
+        do i = 3, pp%particionx + 2
+            x(i) = x(i - 1) + pp%dx
+        end do
+        write(2, *) x
+        write(2, *)
+
+        !core de metodo explicito
+        n = size(pp%iniciales)
+        pp%u = pp%iniciales
+        t = pp%t0
+        write(2, *) t, pp%u
+
+        pp%dt = (pp%tf - pp%t0) / pp%particiont
+        do while(t <= pp%tf)
+            t = t + pp%dt
+            usig(1) = pp%calculoIzquierda(pp, 1)
+            do i = 2, n - 1
+                usig(i) = pp%calculoInterno(pp, i)
+            end do
+            usig(ubound(usig, 1)) = pp%calculoDerecha(pp, ubound(usig, 1))
+            pp%u = usig
+            write(2, *) t, pp%u
+        end do
+        close(2)
+    end subroutine explicito2
+
     subroutine explicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
         real(8), intent(in) :: t0, x0, xf, tf
-        type(frontera2), intent(in) :: ci, cd
+        type(frontera), intent(in) :: ci, cd
         integer(4), intent(in) :: particionx, particiont
         real(8), dimension(particionx - 1), intent(in) :: iniciales
         real(8), dimension(particionx + 2) :: x
@@ -249,7 +339,7 @@ contains
         real(8) t, r, dt, dx
         integer(4) n, i
 
-        !escritura inicial en el archivo
+        !escitura inicial en el archivo
         open(2, FILE=archivo)
         dx = (xf - x0) / particionx
         x(1) =  0.
@@ -262,7 +352,9 @@ contains
 
         !core de metodo explicito
         n = size(iniciales) + 2
-        u(1: n) = iniciales
+        u(1) = ci%valor
+        u(n) = cd%valor
+        u(2: n-1) = iniciales
         t = t0
         write(2, *) t, u
 
@@ -271,20 +363,8 @@ contains
         do while(t <= tf)
             t = t + dt
             uant = u
-            if (ci%tipo == DIRICHLET) then
-                u(1) = ci%valor(x0, t)
-            else
-                !calculo el punto fantasma por la discretizacion de la funcion de neumann
-                !con el punto fantasma y la funcion cadorcha de explicitas podemos calcular el borde
-                u(i) = r * (uant(i+1) + ci%valor(x0, t)) + (1 - 2 * r) * uant(i)
-            endif
-            if (ci%tipo == DIRICHLET) then
-                u(n) = cd%valor(xf, t)
-            else
-                !calculo el punto fantasma por la discretizacion de la funcion de neumann
-                !con el punto fantasma y la funcion cadorcha de explicitas podemos calcular el borde
-                u(i) = r * (cd%valor(xf, t) + uant(i-1)) + (1 - 2 * r) * uant(i)
-            endif
+            u(1) = ci%valor
+            u(n) = cd%valor
             do i = 2, n-1
                 u(i) = r * (uant(i+1) + uant(i-1)) + (1 - 2 * r) * uant(i)
             end do
