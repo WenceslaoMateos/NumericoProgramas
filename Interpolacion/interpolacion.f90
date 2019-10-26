@@ -18,6 +18,22 @@ contains
             evaluarPolinomio = evaluarPolinomio + coeficientes(i) * potencia
         end do
     end function evaluarPolinomio
+
+    function evaluarSplines(a, b, c, d, x, punto)
+        real(8), dimension(0:), intent(in) :: a, b, c, d, x
+        real(8) punto, evaluarSplines
+        integer(4) i, n, j
+
+        n = ubound(x, 1)
+        i = 0
+        do while((i <= n) .and. (punto >= x(i)))
+            i = i + 1
+        end do
+        if (i <= n) then
+            j = i - 1
+            evaluarSplines = a(j) + b(j) * (punto - x(j)) + c(j) * (punto - x(j))**2 + d(j) * (punto - x(j))**3
+        end if
+    end function evaluarSplines
     
     function productoPolinomios(p1, p2)
         real(8), dimension(0:), intent(in) :: p1, p2
@@ -177,7 +193,113 @@ contains
             equiespaciadoAscendente = equiespaciadoAscendente + (acum * diferencias(0) / fact)
         end do
     end function equiespaciadoAscendente
-    
+
+    subroutine splinesCubicos(a, b, c, d, h)
+        real(8), dimension(0:), intent(in) :: a, h
+        real(8), dimension(0:), intent(out) :: b, c, d
+        real(8), dimension(:), allocatable :: u_o, d_o, l_o
+        real(8), dimension(0:ubound(a, 1), 1) :: term_ind
+        integer i, n, INFO
+        
+        n = ubound(a, 1)
+        allocate(u_o(0:n - 1), d_o(0:n), l_o(0:n - 1))
+        do i = 1, n - 1
+            u_o(i) = h(i)
+            d_o(i) = 2 * (h(i - 1) + h(i))
+            l_o(i) = h(i)
+            term_ind(i, 1) = 3 * ((a(i + 1) - a(i)) / h(i) - (a(i) - a(i - 1)) / h(i - 1))
+        end do
+        d_o(n) = 1
+        l_o(n - 1) = 0
+        term_ind(n, 1) = 0
+        term_ind = thomas(u_o, d_o, l_o, term_ind)
+        c = term_ind(:, 1)
+        !call DGTSV(n, 1, l_o, d_o, u_o, c, n, INFO)
+
+        do i = 0, n - 1
+            b(i) = (a(i + 1) - a(i)) / h(i) - h(i) * (2 * c(i) + c(i + 1)) / 3
+            d(i) = (c(i + 1) - c(i)) / (3 * h(i))
+        end do
+        
+        deallocate(u_o, d_o, l_o)
+    end subroutine splinesCubicos
+
+    function minimosCuadrados(x, y, grado)
+        ! Calculo de coef
+        real(8), intent(in), dimension(0:) :: x, y
+        integer(4), intent(in) :: grado
+        real(8), dimension(0:grado) :: minimosCuadrados
+        real(8), dimension(0:grado, 0:grado) :: matriz
+        real(8), dimension(0:grado, 1) :: term_ind, aux
+        integer(4) i
+        
+        matriz(0, 0) = size(x)
+        term_ind(0, 1) = sum(y)
+        do i = 1, grado
+            matriz(0, i) = sum(x**i)
+            term_ind(i, 1) = sum(y * x**i)
+        end do
+        do i = 1, grado
+            matriz(i, 0:grado - 1) = matriz(i - 1, 1:grado)
+            matriz(i, grado) = sum(x**(grado + i))
+        end do
+        aux = solucionGaussJordan(matriz, term_ind)
+        minimosCuadrados = aux(:, 1)
+    end function minimosCuadrados
+
+    function mejorMinimosCuadrados(x, y)
+        real(8), intent(in), dimension(0:) :: x, y
+        real(8), dimension(0:size(x, DIM=1)) :: mejorMinimosCuadrados, nuevoMinimos
+        real(8) vMejor, vNuevo
+        integer(4) i
+
+        mejorMinimosCuadrados = 0.
+        mejorMinimosCuadrados = minimosCuadrados(x, y, 1)
+        vMejor = RMS(x, y, mejorMinimosCuadrados, size(x, DIM=1), 1)
+        nuevoMinimos = minimosCuadrados(x, y, 2)
+        vNuevo = RMS(x, y, nuevoMinimos, size(x, DIM=1), 2)
+
+        i = 2
+        do while(vMejor > vNuevo)
+            i = i + 1 
+            vMejor = vNuevo
+            mejorMinimosCuadrados = nuevoMinimos
+            
+            nuevoMinimos = minimosCuadrados(x, y, i)
+            vNuevo = RMS(x, y, nuevoMinimos, size(x, DIM=1), i)    
+        end do
+    end function mejorMinimosCuadrados
+
+    function varianza(x, y, coeficientes, M, grado)
+        real(8), intent(in), dimension(0:) :: x, y
+        real(8), dimension(0:), intent(in) :: coeficientes
+        integer(4), intent(in) :: M, grado
+        real(8) varianza
+        integer(4) i, n
+        
+        n = grado
+        varianza = 0
+        do i = 0, M
+            varianza = varianza + (evaluarPolinomio(coeficientes, x(i)) - y(i)) ** 2
+        end do
+        varianza = varianza / (M - n - 1)
+    end function varianza
+
+    function RMS(x, y, coeficientes, M, grado)
+        real(8), intent(in), dimension(0:) :: x, y
+        real(8), dimension(0:), intent(in) :: coeficientes
+        integer(4), intent(in) :: M, grado
+        real(8) RMS
+        integer(4) i, n
+        
+        n = grado
+        RMS = 0
+        do i = 0, M
+            RMS = RMS + (evaluarPolinomio(coeficientes, x(i)) - y(i)) ** 2
+        end do
+        RMS = sqrt(RMS / M)
+    end function RMS
+
     subroutine mostrarPolinomio(coeficientes)
         real(8), dimension(0:) :: coeficientes
         integer(4) orden, i
