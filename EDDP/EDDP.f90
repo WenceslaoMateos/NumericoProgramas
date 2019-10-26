@@ -288,7 +288,7 @@ contains
         formularProblemaParabolicas = pp
     end function
 
-    subroutine explicito2(pp, archivo)
+    subroutine explicito(pp, archivo)
         type(ProblemaParabolicas), intent(inout) :: pp
         character(len=*), intent(in) :: archivo
         real(8), dimension(pp%particionx + 2) :: x
@@ -323,52 +323,6 @@ contains
             usig(ubound(usig, 1)) = pp%calculoDerecha(pp, ubound(usig, 1))
             pp%u = usig
             write(2, *) t, pp%u
-        end do
-        close(2)
-    end subroutine explicito2
-
-    subroutine explicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
-        real(8), intent(in) :: t0, x0, xf, tf
-        type(frontera), intent(in) :: ci, cd
-        integer(4), intent(in) :: particionx, particiont
-        real(8), dimension(particionx - 1), intent(in) :: iniciales
-        real(8), dimension(particionx + 2) :: x
-        character(len=*), intent(in) :: archivo
-        procedure(funr) :: erre
-        real(8), dimension(size(iniciales) + 2) :: uant, u
-        real(8) t, r, dt, dx
-        integer(4) n, i
-
-        !escitura inicial en el archivo
-        open(2, FILE=archivo)
-        dx = (xf - x0) / particionx
-        x(1) =  0.
-        x(2) = x0
-        do i = 3, particionx + 2
-            x(i) = x(i-1) + dx
-        end do
-        write(2, *) x
-        write(2, *)
-
-        !core de metodo explicito
-        n = size(iniciales) + 2
-        u(1) = ci%valor
-        u(n) = cd%valor
-        u(2: n-1) = iniciales
-        t = t0
-        write(2, *) t, u
-
-        dt = (tf - t0) / particiont
-        r = erre(dx, dt)
-        do while(t <= tf)
-            t = t + dt
-            uant = u
-            u(1) = ci%valor
-            u(n) = cd%valor
-            do i = 2, n-1
-                u(i) = r * (uant(i+1) + uant(i-1)) + (1 - 2 * r) * uant(i)
-            end do
-            write(2, *) t, u
         end do
         close(2)
     end subroutine explicito
