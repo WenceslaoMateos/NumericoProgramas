@@ -3,13 +3,13 @@ program main
 
     implicit none
     
-    real(8), dimension(0:3) :: x, y, minCuad, lagrange, polinomioDescendente, polinomioAscendente, directo
-    real(8), dimension(0:2) :: b, c, d, h
+    real(8), dimension(0:8) :: x, y, minCuad, lagrange, polinomioDescendente, polinomioAscendente, directo
+    real(8), dimension(0:5) :: b, c, d, h
     real(8) xdesco
     
-    xdesco = 1.5
-    x = [-4., -2., 0., 2.]
-    y = [-7.38, 0.52, 2., 14.52]
+    xdesco = 5.35
+    !x = [-4., -2., 0., 2.]
+    !y = [-7.38, 0.52, 2., 14.52]
     !x = [0., 2., 4., 6.]
     !y = [0.25, 0.6, 0.9, 1.]
     !x = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6]
@@ -20,21 +20,21 @@ program main
     !y = [4.10, 4.30, 4.10, 3.00]
     !x = [17.00, 20.00, 23.00, 24.00, 25.00, 27.00, 27.70]
     !y = [4.50, 7., 6.10, 5.60, 5.80, 5.20, 4.10]
-    !x = [1.00, 2.00, 5.00, 6.00, 7.00, 8.00, 10.00, 13.00, 17.00]
-    !y = [3.00, 3.70, 3.90, 4.20, 5.70, 6.60, 7.10, 6.70, 4.50]
+    x = [1.00, 2.00, 5.00, 6.00, 7.00, 8.00, 10.00, 13.00, 17.00]
+    y = [3.00, 3.70, 3.90, 4.20, 5.70, 6.60, 7.10, 6.70, 4.50]
     
     directo = polinomioAproximante(x, y)
     lagrange = polinomioLagrange(x, y)
-    minCuad = minimosCuadrados(x, y, 3)
+    minCuad = mejorMinimosCuadrados(x, y)
     call diferenciasDivididas(x, y, polinomioDescendente, polinomioAscendente)
-    h = calculaH(x)
-    call splinesCubicos(y, b, c, d, h)
+    !h = calculaH(x)
+    !call splinesCubicos(y, b, c, d, h)
     write(*, *) 'Divididas Ascendente: ',evaluarPolinomio(polinomioAscendente, xdesco)
     write(*, *) 'Divididas Descendente: ',evaluarPolinomio(polinomioDescendente, xdesco)
     write(*, *) 'Equiespaciado: ',diferenciasEquiespaciado(x, y, xdesco)
     write(*, *) 'Lagrange: ',evaluarPolinomio(lagrange, xdesco)
     write(*, *) 'Directo: ',evaluarPolinomio(directo, xdesco)
-    write(*, *) 'Splines: ',evaluarSplines(y, b, c, d, x, xdesco)
+    !write(*, *) 'Splines: ',evaluarSplines(y, b, c, d, x, xdesco)
     write(*, *) 'Minimos Cuadrados: ',evaluarPolinomio(minCuad, xdesco)
     call graficarPolinomio(minCuad, x, 0.01_8, 'archivo.dat')
     call graficarPolinomio(lagrange, x, 0.01_8, 'archivo.dat')

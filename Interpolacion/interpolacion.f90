@@ -249,13 +249,14 @@ contains
 
     function mejorMinimosCuadrados(x, y)
         real(8), intent(in), dimension(0:) :: x, y
-        real(8), dimension(0:size(x, DIM=1)) :: mejorMinimosCuadrados, nuevoMinimos
+        real(8), dimension(0:ubound(x, 1)) :: mejorMinimosCuadrados, nuevoMinimos
         real(8) vMejor, vNuevo
         integer(4) i
 
         mejorMinimosCuadrados = 0.
         mejorMinimosCuadrados = minimosCuadrados(x, y, 1)
         vMejor = RMS(x, y, mejorMinimosCuadrados, size(x, DIM=1), 1)
+        nuevoMinimos = 0.
         nuevoMinimos = minimosCuadrados(x, y, 2)
         vNuevo = RMS(x, y, nuevoMinimos, size(x, DIM=1), 2)
 
@@ -279,7 +280,7 @@ contains
         
         n = grado
         varianza = 0
-        do i = 0, M
+        do i = 0, M - 1
             varianza = varianza + (evaluarPolinomio(coeficientes, x(i)) - y(i)) ** 2
         end do
         varianza = varianza / (M - n - 1)
@@ -294,7 +295,7 @@ contains
         
         n = grado
         RMS = 0
-        do i = 0, M
+        do i = 0, M - 1
             RMS = RMS + (evaluarPolinomio(coeficientes, x(i)) - y(i)) ** 2
         end do
         RMS = sqrt(RMS / M)
