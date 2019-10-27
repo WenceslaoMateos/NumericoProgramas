@@ -2,6 +2,13 @@ module interpolacion
     use SELs
     use arreglos
     implicit none
+
+    abstract interface
+        function ajusteMinCuad(x, y, coeficientes)
+            real(8), intent(in), dimension(0:) :: x, y, coeficientes
+            real(8) ajusteMinCuad
+        end function ajusteMinCuad
+    end interface
     
 contains
 
@@ -247,54 +254,58 @@ contains
         minimosCuadrados = aux(:, 1)
     end function minimosCuadrados
 
-    function mejorMinimosCuadrados(x, y)
+    subroutine mejorMinimosCuadrados(x, y, coeficientes, criterio)
         real(8), intent(in), dimension(0:) :: x, y
-        real(8), dimension(0:ubound(x, 1)) :: mejorMinimosCuadrados, nuevoMinimos
+        real(8), dimension(:), allocatable, intent(out) :: coeficientes
+        procedure(ajusteMinCuad) :: criterio
+        real(8), dimension(:), allocatable :: nuevoMinimos, mejorMinimos
         real(8) vMejor, vNuevo
         integer(4) i
 
-        mejorMinimosCuadrados = 0.
-        mejorMinimosCuadrados = minimosCuadrados(x, y, 1)
-        vMejor = RMS(x, y, mejorMinimosCuadrados, size(x, DIM=1), 1)
-        nuevoMinimos = 0.
+        mejorMinimos = minimosCuadrados(x, y, 1)
+        vMejor = criterio(x, y, mejorMinimos)
         nuevoMinimos = minimosCuadrados(x, y, 2)
-        vNuevo = RMS(x, y, nuevoMinimos, size(x, DIM=1), 2)
+        vNuevo = criterio(x, y, nuevoMinimos)
 
-        i = 2
-        do while(vMejor > vNuevo)
-            i = i + 1 
+        i = 3
+        do while(i <= ubound(x, 1) .and. vMejor > vNuevo)
             vMejor = vNuevo
-            mejorMinimosCuadrados = nuevoMinimos
+            mejorMinimos = nuevoMinimos
             
             nuevoMinimos = minimosCuadrados(x, y, i)
-            vNuevo = RMS(x, y, nuevoMinimos, size(x, DIM=1), i)    
+            vNuevo = criterio(x, y, nuevoMinimos)
+            i = i + 1 
         end do
-    end function mejorMinimosCuadrados
+        if (i > ubound(x, 1) .and. vMejor > vNuevo) then
+            mejorMinimos = nuevoMinimos
+        end if
+        allocate(coeficientes(0:ubound(mejorMinimos, 1) - 1))
+        coeficientes = mejorMinimos
+        deallocate(nuevoMinimos, mejorMinimos)
+    end subroutine mejorMinimosCuadrados
 
-    function varianza(x, y, coeficientes, M, grado)
+    function varianza(x, y, coeficientes)
         real(8), intent(in), dimension(0:) :: x, y
         real(8), dimension(0:), intent(in) :: coeficientes
-        integer(4), intent(in) :: M, grado
         real(8) varianza
-        integer(4) i, n
+        integer(4) i, n, M
         
-        n = grado
-        varianza = 0
+        M = size(x)
+        n = ubound(coeficientes, 1)
+        varianza = 0.
         do i = 0, M - 1
             varianza = varianza + (evaluarPolinomio(coeficientes, x(i)) - y(i)) ** 2
         end do
         varianza = varianza / (M - n - 1)
     end function varianza
 
-    function RMS(x, y, coeficientes, M, grado)
-        real(8), intent(in), dimension(0:) :: x, y
-        real(8), dimension(0:), intent(in) :: coeficientes
-        integer(4), intent(in) :: M, grado
+    function RMS(x, y, coeficientes)
+        real(8), intent(in), dimension(0:) :: x, y, coeficientes
         real(8) RMS
-        integer(4) i, n
+        integer(4) i, M
         
-        n = grado
-        RMS = 0
+        M = size(x)
+        RMS = 0.
         do i = 0, M - 1
             RMS = RMS + (evaluarPolinomio(coeficientes, x(i)) - y(i)) ** 2
         end do
