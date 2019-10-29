@@ -3,8 +3,8 @@ program main
 
     implicit none
     
-    real(8), dimension(0:5) :: x, y, lagrange, polinomioDescendente, polinomioAscendente, directo
-    real(8), dimension(0:5) :: b, c, d, h
+    real(8), dimension(0:6) :: a, b, c, d, x, y, lagrange, polinomioDescendente, polinomioAscendente, directo
+    real(8), dimension(0:5) :: h
     real(8), dimension(:), allocatable :: minCuad
     real(8) xdesco
     
@@ -13,34 +13,38 @@ program main
     !y = [-7.38, 0.52, 2., 14.52]
     !x = [0., 2., 4., 6.]
     !y = [0.25, 0.6, 0.9, 1.]
-    x = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6]
-    y = [0.37798, 0.46852, 0.55437, 0.63469, 0.70867, 0.77557]
+    !x = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6]
+    !y = [0.37798, 0.46852, 0.55437, 0.63469, 0.70867, 0.77557]
     
     !para splines
     !x = [27.70, 28., 29., 30.]
     !y = [4.10, 4.30, 4.10, 3.00]
-    !x = [17.00, 20.00, 23.00, 24.00, 25.00, 27.00, 27.70]
-    !y = [4.50, 7., 6.10, 5.60, 5.80, 5.20, 4.10]
+    x = [17.00, 20.00, 23.00, 24.00, 25.00, 27.00, 27.70]
+    y = [4.50, 7., 6.10, 5.60, 5.80, 5.20, 4.10]
     !x = [1.00, 2.00, 5.00, 6.00, 7.00, 8.00, 10.00, 13.00, 17.00]
     !y = [3.00, 3.70, 3.90, 4.20, 5.70, 6.60, 7.10, 6.70, 4.50]
+    a = y
     
-    directo = polinomioAproximante(x, y)
-    lagrange = polinomioLagrange(x, y)
-    call mejorMinimosCuadrados(x, y, minCuad, varianza)
-    call diferenciasDivididas(x, y, polinomioDescendente, polinomioAscendente)
-    !h = calculaH(x)
-    !call splinesCubicos(y, b, c, d, h)
-    write(*, *) 'Divididas Ascendente: ',evaluarPolinomio(polinomioAscendente, xdesco)
-    write(*, *) 'Divididas Descendente: ',evaluarPolinomio(polinomioDescendente, xdesco)
-    write(*, *) 'Equiespaciado: ',diferenciasEquiespaciado(x, y, xdesco)
-    write(*, *) 'Lagrange: ',evaluarPolinomio(lagrange, xdesco)
-    write(*, *) 'Directo: ',evaluarPolinomio(directo, xdesco)
+    !directo = polinomioAproximante(x, y)
+    !lagrange = polinomioLagrange(x, y)
+    !call mejorMinimosCuadrados(x, y, minCuad, varianza)
+    !call diferenciasDivididas(x, y, polinomioDescendente, polinomioAscendente)
+    h = calculaH(x)
+    call splinesCubicos(a, b, c, d, h)
+    !write(*, *) 'Divididas Ascendente: ',evaluarPolinomio(polinomioAscendente, xdesco)
+    !write(*, *) 'Divididas Descendente: ',evaluarPolinomio(polinomioDescendente, xdesco)
+    !write(*, *) 'Equiespaciado: ',diferenciasEquiespaciado(x, y, xdesco)
+    !write(*, *) 'Lagrange: ',evaluarPolinomio(lagrange, xdesco)
+    !write(*, *) 'Directo: ',evaluarPolinomio(directo, xdesco)
     !write(*, *) 'Splines: ',evaluarSplines(y, b, c, d, x, xdesco)
-    write(*, *) 'Minimos Cuadrados: ',evaluarPolinomio(minCuad, xdesco)
-    call graficarPolinomio(minCuad, x, 0.01_8, 'archivo.dat')
-    call graficarPolinomio(lagrange, x, 0.01_8, 'archivo.dat')
+    !write(*, *) 'Minimos Cuadrados: ',evaluarPolinomio(minCuad, xdesco)
+    !call graficarPolinomio(polinomioAscendente, x, 0.01_8, 'archivo.dat', 'Diferencias Divididas - Ascendente')
+    !call graficarPolinomio(polinomioDescendente, x, 0.01_8, 'archivo.dat', 'Diferencias Divididas - Descendente')
+    !call graficarPolinomio(directo, x, 0.01_8, 'archivo.dat', 'Directo')
+    !call graficarPolinomio(minCuad, x, 0.01_8, 'archivo.dat', 'Minimos Cuadrados')
+    !call graficarPolinomio(lagrange, x, 0.01_8, 'archivo.dat', 'Lagrange')
 
-    !call graficarSplines(y, b, c, d, x, 0.01_8, 'archivo.dat')
+    call graficarSplines(a, b, c, d, x, 0.01_8, 'archivo.dat', 'Splines')
     
 contains
 
@@ -53,10 +57,10 @@ contains
         calculaH = x(1:n) - x(0:n-1)
     end function calculaH
 
-    subroutine graficarSplines(a, b, c, d, x, salto, archivo)
+    subroutine graficarSplines(a, b, c, d, x, salto, archivo, nombre)
         real(8), dimension(0:), intent(in) :: a, b, c, d, x
         real(8), intent(in) :: salto
-        character(LEN=*), intent(in) :: archivo
+        character(LEN=*), intent(in) :: archivo, nombre
         integer(4) n
 
         open(2, FILE=archivo)
@@ -67,13 +71,13 @@ contains
             xdesco = xdesco + salto
         end do
         close(2)
-        call plot(archivo)
+        call plot(archivo, nombre)
     end subroutine graficarSplines
 
-    subroutine graficarPolinomio(coeficientes, x, salto, archivo)
+    subroutine graficarPolinomio(coeficientes, x, salto, archivo, nombre)
         real(8), dimension(0:), intent(in) :: coeficientes, x
         real(8), intent(in) :: salto
-        character(LEN=*), intent(in) :: archivo
+        character(LEN=*), intent(in) :: archivo, nombre
         integer(4) n
 
         open(2, FILE=archivo)
@@ -84,12 +88,12 @@ contains
             xdesco = xdesco + salto
         end do
         close(2)
-        call plot(archivo)
+        call plot(archivo, nombre)
     end subroutine graficarPolinomio
 
-    subroutine plot(archivo)
-        intent(in) :: archivo
-        character (LEN=*) :: archivo
+    subroutine plot(archivo, nombre)
+        intent(in) :: archivo, nombre
+        character (LEN=*) :: archivo, nombre
 
         open(unit=2, file="temporal.p", access='SEQUENTIAL', status='REPLACE')
         write(2, *) "set autoscale"
@@ -101,7 +105,7 @@ contains
         write(2, *) "set title 'Spline'"
         write(2, *) "set xlabel 'x'"
         write(2, *) "set ylabel 'f(x)'"
-        write(2, *) "plot '", archivo, "' using 1:2 title 'Spline' with lines"
+        write(2, *) "plot '", archivo, "' using 1:2 title '", nombre ,"' with lines"
         call system('gnuplot -persist temporal.p')
         close(2, STATUS='DELETE')
     end subroutine plot

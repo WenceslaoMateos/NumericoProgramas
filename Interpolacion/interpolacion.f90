@@ -205,23 +205,29 @@ contains
         real(8), dimension(0:), intent(in) :: a, h
         real(8), dimension(0:), intent(out) :: b, c, d
         real(8), dimension(:), allocatable :: u_o, d_o, l_o
-        real(8), dimension(0:ubound(a, 1), 1) :: term_ind
+        !real(8), dimension(0:ubound(a, 1), 1) :: term_ind
         integer i, n, INFO
         
         n = ubound(a, 1)
         allocate(u_o(0:n - 1), d_o(0:n), l_o(0:n - 1))
+        u_o(0) = 0
+        d_o(0) = 1
+        l_o(0) = h(0)
+        c(0) = 0
         do i = 1, n - 1
             u_o(i) = h(i)
             d_o(i) = 2 * (h(i - 1) + h(i))
             l_o(i) = h(i)
-            term_ind(i, 1) = 3 * ((a(i + 1) - a(i)) / h(i) - (a(i) - a(i - 1)) / h(i - 1))
+            c(i) = 3 * ((a(i + 1) - a(i)) / h(i) - (a(i) - a(i - 1)) / h(i - 1))
+            !term_ind(i, 1) = 3 * ((a(i + 1) - a(i)) / h(i) - (a(i) - a(i - 1)) / h(i - 1))
         end do
         d_o(n) = 1
         l_o(n - 1) = 0
-        term_ind(n, 1) = 0
-        term_ind = thomas(u_o, d_o, l_o, term_ind)
-        c = term_ind(:, 1)
-        !call DGTSV(n, 1, l_o, d_o, u_o, c, n, INFO)
+        c(n) = 0
+        !term_ind(n, 1) = 0
+        !term_ind = thomas(u_o, d_o, l_o, term_ind)
+        !c = term_ind(:, 1)
+        call DGTSV(n, 1, l_o, d_o, u_o, c, n, INFO)
 
         do i = 0, n - 1
             b(i) = (a(i + 1) - a(i)) / h(i) - h(i) * (2 * c(i) + c(i + 1)) / 3
