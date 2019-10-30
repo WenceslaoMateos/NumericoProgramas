@@ -14,4 +14,6 @@ program main
     write(*, *) 'Simpson de 3/8 al principio: ',simpsonTresOctavos(x(0:3), y(0:3))
     write(*, *) 'Simpson de 1/3 al final: ',simpsonUnTercio(x(3:5), y(3:5))
     write(*, *) 'Simpson de 1/3 + Simpson de 3/8: ',simpsonTresOctavos(x(0:3), y(0:3)) + simpsonUnTercio(x(3:5), y(3:5))
+    write(*, *) 'Romberg: ', romberg(x(0:4), y(0:4))
+    write(*, *) 'Romberg + Trapecios: ', romberg(x(0:4), y(0:4)) + trapecios(x(4:5), y(4:5))
 end program main

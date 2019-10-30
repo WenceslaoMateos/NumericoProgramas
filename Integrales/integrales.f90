@@ -44,6 +44,34 @@ contains
         simpsonTresOctavos = 3 * h * simpsonTresOctavos / 8.
     end function simpsonTresOctavos
 
+    ! Necesita 2**n + 1 puntos
+    function romberg(x, y)
+        real(8), dimension(0:), intent(in) :: x, y
+        real(8) dx, romberg
+        integer(4) paso, i, cant_trap, grado, reducciones
+        real(8), dimension(:), allocatable :: trap
+
+        dx = x(1) - x(0)
+        paso = ubound(x, 1)
+        cant_trap = log(real(paso)) / log(2.)
+        allocate(trap(0:cant_trap))
     
+        ! Genera los trapecios iniciales
+        do i = 0, cant_trap
+            trap(i) = trapecios(x(::paso), y(::paso))
+            paso = paso / 2
+        end do
+
+        ! Extrapolacion de Richardson
+        reducciones = cant_trap - 1
+        do grado = 2, cant_trap + 1
+            do i = 0, reducciones
+                trap(i) = (4**(grado-1) * trap(i+1) - trap(i)) / (4**(grado-1) - 1)
+            end do
+            reducciones = reducciones - 1
+        end do
+
+        romberg = trap(0)
+    end function romberg
 
 end module integrales
