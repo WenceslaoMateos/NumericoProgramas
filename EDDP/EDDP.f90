@@ -444,6 +444,57 @@ contains
         end do
         close(2)
     end subroutine implicito
+    
 !--------------------------------HIPERBOLICAS--------------------------------!
+    subroutine hiperbolicas(v, r, tf, dt, dx, archivo)
+        real(8), intent(in) :: tf, r, dx, dt
+        character(len=*), intent(in) :: archivo
+        real(8) v(:), x, t, longitud
+        real(8), dimension(1:ubound(v, 1)) :: vAnt, vAct
+        integer(4)  n, i
+        
+        n = ubound(v, 1)
+        open(2, FILE=archivo)
+        
+        x = 0
+        do i = 1, n
+            write(2, "(F20.15)", ADVANCE="NO") x
+            x = x + dx
+        end do
+        write(2, *) v
 
+        longitud = (n-1)*dx
+        vAct = v
+        vAnt = v
+        vAnt(1) = 0
+        vAnt(n) = 0
+        x = dx
+
+        !calculo y escritura de la primera estimacion
+        do i = 2, n - 1
+            vAct(i) = ((vAnt(i-1) + vAnt(i+1))/2.) + velocidad(i, x) * dt
+            !vAct = r * (vAnt(i+1) + vAnt(i-1)) / 2 + velocidad(i, dx) * dt + (1-r) * vAnt  
+        end do
+        write(2, *) vAct
+
+        t = 2*dt
+        do while (t <= tf)
+            do i = 2, n - 1
+                v(i) = vAct(i+1) + vAct(i-1) - vAnt(i)
+                !v(i) = r * (vAct(i+1) + vAct(i-1)) - vAnt(i) + (2 - 2*r) * vAct(i)
+            end do
+            t = t + dt
+            write(2, *) v
+            vAnt = vAct
+            vAct = v
+        end do  
+    end subroutine hiperbolicas
+
+    function velocidad(i, x)
+        real(8) velocidad, x
+        integer(4) i
+        
+        velocidad = 0
+    end function velocidad
+      
 end module EDDP

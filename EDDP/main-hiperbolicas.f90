@@ -5,61 +5,23 @@ program principal
 
     implicit none
     
-    real(8) x0, x1, y0, y1
-    integer(4) n, m, orden
-    real(8), dimension(:, :), allocatable :: mat, distribucion
-    type(frontera), dimension(:), allocatable :: superior, inferior, izquierda, derecha
-    real(8), dimension(:, :), allocatable :: term_ind, xini, res
+    real(8) dx, dt, tf
+    real(8), dimension(1:9) :: vector
 
-    x0 = 0.
-    x1 = 20.
-    y0 = 0.
-    y1 = 10.
-    n = 8
-    m = 4
-    orden = (n - 1) * (m - 1)
-
-    allocate(mat(1:orden, 1:orden), distribucion(1:m+1, 1:n+1))
-    allocate(term_ind(1:orden, 1), xini(1:orden, 1), res(1:orden, 1))
-    allocate(superior(1:n-1), inferior(1:n-1))
-    allocate(izquierda(1:m-1), derecha(1:m-1))
-    
-    superior%valor = 0.
-    inferior%valor = 0.
-    izquierda%valor = 0.
-    derecha%valor = 100.
-    superior%tipo = NEUMANN
-    inferior%tipo = DIRICHLET
-    izquierda%tipo = NEUMANN
-    derecha%tipo = DIRICHLET
-    call generarSistema(mat, term_ind, x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace)
-
-    call mostrarMatriz(mat, '(21F7.2)')
-    write (*, *)
-    call mostrarMatriz(term_ind, '(F7.2)')
-    write (*, *)
-
-    xini = 0.
-    res = gaussSeidel(mat, term_ind, xini, 0.000001_8)
-    call mostrarMatriz(res)
-    write (*, *)
-
-    distribucion = generarDistribucion(n, m, x0, x1, y0, y1, res(:, 1), 0._8, &
-        100._8, 0._8, 100._8, superior, inferior, izquierda, derecha)
-    call mostrarMatriz(distribucion, '(9F7.2)')
-    call grabarDatos(distribucion, x0, x1, y0, y1, n, m, 'valores.dat')
-    call plot('valores.dat')
-
-    deallocate(mat, distribucion, superior, inferior, izquierda, derecha, term_ind, xini, res)
+    vector(:) = [0., 0.3, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.]
+    dx = 0.01
+    dt = dx/sqrt(0.000179*9.8/40)
+    tf = dt * 20
+    call hiperbolicas(vector, erre(dx, dt), tf, dt, dx, "resultados.dat")
 
 contains
 
-    function f(x, y)
+    function erre(x, y)
         real(8), intent(in) :: x, y
-        real(8) f
+        real(8) erre
 
-        f = x / y
-    end function
+        erre = x / y
+    end function erre
 
     subroutine plot(archivo)
         character(len=*), intent(in) :: archivo
