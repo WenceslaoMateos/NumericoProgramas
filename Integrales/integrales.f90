@@ -18,7 +18,7 @@ contains
         trapecios = trapecios / 2.
     end function trapecios
 
-    !ojo que solo sirve si los puntos son equiespacidos (de 3 en 3), no se toma con rangos diferentes
+    !ojo que solo sirve si los puntos son equiespacidos (de 2 en 2), no se toma con rangos diferentes
     function simpsonUnTercio(x, y)
         real(8), dimension(0:), intent(in) :: x, y
         real(8) h, simpsonUnTercio
