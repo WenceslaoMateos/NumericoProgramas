@@ -5,22 +5,27 @@ program principal
 
     implicit none
     
-    real(8) dx, dt, tf
-    real(8), dimension(1:9) :: vector
+    real(8) dx, dt, tf, T, g, w
+    real(8), dimension(1:9) :: vector, velocidades
 
+    !Valores iniciales
     vector(:) = [0., 0.3, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.]
+    T = 0.000179
+    g = 9.8
+    w = 40. 
     dx = 0.01
-    dt = dx/sqrt(0.000179*9.8/40)
-    tf = dt * 20
-    call hiperbolicas(vector, erre(dx, dt), tf, dt, dx, "resultados.dat")
+    dt = dx/sqrt(T*g/w)
+    tf = dt * 200
+    velocidades = 0.
+    call hiperbolicas(vector, erre(dx, dt, T, g, w), tf, dt, dx, velocidades, "resultados.dat")
 
 contains
 
-    function erre(x, y)
-        real(8), intent(in) :: x, y
+    function erre(dx, dt, T, g, w)
+        real(8), intent(in) :: dx, dt, T, g, w
         real(8) erre
 
-        erre = x / y
+        erre = T * g * dt**2/(w * dx**2)
     end function erre
 
     subroutine plot(archivo)
