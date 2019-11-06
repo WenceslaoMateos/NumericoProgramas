@@ -55,6 +55,47 @@ module EDDP
 contains
 
 !--------------------------------ELIPTICAS--------------------------------!
+
+    function gaussSeidelElipticas(matriz, term_ind, xini, tol, n, m)
+        real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
+        real(8), intent(in) :: tol
+        integer(4), intent(in) :: n, m
+        real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: gaussSeidelElipticas, xant
+        real(8) e1
+        integer(4) i, j, orden, cont
+
+        gaussSeidelElipticas = xini
+        orden = size(gaussSeidelElipticas, dim=1)
+        e1 = tol + 1
+        cont = 0
+        do while(e1 > tol)
+            xant = gaussSeidelElipticas
+            do i = 1, orden
+                gaussSeidelElipticas(i, :) = term_ind(i, :)
+                ! tiene izquierda
+                if (mod(i, n) /= 1) then
+                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i-1) * gaussSeidelElipticas(i-1, :)
+                end if
+                ! tiene derecha
+                if (mod(i, n) /= 0) then
+                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i+1) * gaussSeidelElipticas(i+1, :)
+                end if
+                ! tiene arriba
+                if (i > n) then
+                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i-n) * gaussSeidelElipticas(i-n, :)
+                end if
+                ! tiene abajo
+                if (i / n + 1 < m) then
+                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i+n) * gaussSeidelElipticas(i+n, :)
+                end if
+                gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) / matriz(i, i)
+            end do
+            e1 = errorRelativo(gaussSeidelElipticas, xant, mNormaM)
+            cont = cont + 1
+        end do
+        write(*, *) "Iteraciones: ", cont
+    end function gaussSeidelElipticas
+
     function laplace(x, y)
         real(8), intent(in) :: x, y
         real(8) laplace

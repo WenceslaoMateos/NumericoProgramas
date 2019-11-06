@@ -15,8 +15,8 @@ program principal
     x1 = 20.
     y0 = 0.
     y1 = 10.
-    n = 8
-    m = 4
+    n = 141
+    m = 61
     orden = (n - 1) * (m - 1)
 
     allocate(mat(1:orden, 1:orden), distribucion(1:m+1, 1:n+1))
@@ -28,25 +28,25 @@ program principal
     inferior%valor = 0.
     izquierda%valor = 0.
     derecha%valor = 100.
-    superior%tipo = NEUMANN
+    superior%tipo = DIRICHLET
     inferior%tipo = DIRICHLET
-    izquierda%tipo = NEUMANN
+    izquierda%tipo = DIRICHLET
     derecha%tipo = DIRICHLET
     call generarSistema(mat, term_ind, x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace)
 
-    call mostrarMatriz(mat, '(21F7.2)')
-    write (*, *)
-    call mostrarMatriz(term_ind, '(F7.2)')
-    write (*, *)
+    ! call mostrarMatriz(mat, '(21F7.2)')
+    ! write (*, *)
+    ! call mostrarMatriz(term_ind, '(F7.2)')
+    ! write (*, *)
 
     xini = 0.
-    res = gaussSeidel(mat, term_ind, xini, 0.000001_8)
-    call mostrarMatriz(res)
+    res = gaussSeidelElipticas(mat, term_ind, xini, 0.000001_8, n-1, m-1)
+    ! call mostrarMatriz(res)
     write (*, *)
 
     distribucion = generarDistribucion(n, m, x0, x1, y0, y1, res(:, 1), 0._8, &
         100._8, 0._8, 100._8, superior, inferior, izquierda, derecha)
-    call mostrarMatriz(distribucion, '(9F7.2)')
+    ! call mostrarMatriz(distribucion, '(9F7.2)')
     call grabarDatos(distribucion, x0, x1, y0, y1, n, m, 'valores.dat')
     call plot('valores.dat')
 
