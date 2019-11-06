@@ -95,10 +95,10 @@ contains
         write(2, *) "set grid"
         write(2, *) "set xtic auto"
         write(2, *) "set ytic auto"
-        write(2, *) "set title 'Spline'"
+        write(2, *) "set title '", nombre, "'"
         write(2, *) "set xlabel 'x'"
         write(2, *) "set ylabel 'f(x)'"
-        write(2, *) "plot ", rango ," ", f ," title '", nombre ,"' with lines"
+        write(2, *) "plot ", rango ," ", f ," title '", f ,"' with lines"
         call system('gnuplot -persist temporal.p')
         close(2, STATUS='DELETE')
     end subroutine plot
