@@ -13,19 +13,20 @@ contains
     function biseccion(a, b, f, tol)
         real(8), intent(in) :: a, b, tol
         procedure(funcion) :: f
-        real(8) biseccion, izq, der
-        integer(4) n, i
+        real(8) biseccion, izq, der, fx
 
         izq = a
         der = b
-        n = ceiling((log(abs(der - izq)/ tol))/log(2.))
-        do i = 1, n
-            biseccion = (izq + der)/2.
-            if (f(izq) * f(biseccion) < 0.) then
+        biseccion = (izq + der)/2.
+        fx = f(biseccion)
+        do while (abs(fx) >= tol)
+            if (f(izq) * fx < 0.) then
                 der = biseccion
             else
                 izq = biseccion
             end if
+            biseccion = (izq + der)/2.
+            fx = f(biseccion)
         end do
     end function biseccion
 
