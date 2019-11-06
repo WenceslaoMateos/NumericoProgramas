@@ -48,16 +48,17 @@ contains
         puntoFijo = x
     end function puntoFijo
 
-    function puntoFijoSistematico(x0, f, lambda, tol, max_iter)
-        real(8), intent(in) :: x0, tol
+    function puntoFijoSistematico(x0, f, a, b, deriv, tol, max_iter)
+        real(8), intent(in) :: x0, a, b, tol
         integer(4), intent(in) :: max_iter
-        procedure(funcion) :: f
+        procedure(funcion) :: f, deriv
         integer(4) i
         real(8) error, x, puntoFijoSistematico, lambda
         
         x = x0
         error = tol + 1
         i = 0
+        lambda = 1./maxDeriv(a, b, deriv, (b-a)/100)
         do while ((error >= tol) .AND. (i <= max_iter))
             x = x - lambda * f(x)
             error = abs(f(x))
@@ -65,6 +66,22 @@ contains
         end do
         puntoFijoSistematico = x
     end function puntoFijoSistematico
+
+    function maxDeriv(a, b, deriv, h)
+        real(8), intent(in) :: a, b, h
+        real(8) maxDeriv, x, act
+        procedure(funcion) :: deriv
+
+        maxDeriv = deriv(a)
+        x = a + h
+        do while (x <= b)
+            act = deriv(x)
+            if (act > maxDeriv) then
+                maxDeriv = act
+            end if
+            x = x + h
+        end do
+    end function maxDeriv
 
     function newton(x0, f, df, tol, max_iter)
         real(8), intent(in) :: x0, tol

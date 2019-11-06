@@ -20,8 +20,7 @@ program main
     x0 = -0.99
     tol = 1e-5
     !El lambda a elegir depende del intervalo a buscar raiz.
-    lambda = 1./maxDeriv(a, b, dfunc, tol)
-    res = puntoFijoSistematico(x0, func, lambda, tol, 200)
+    res = puntoFijoSistematico(x0, func, a, b, dfunc, tol, 200)
     write(*, *) "El resultado de punto fijo sistematico es: ", res
 
     x0 = -0.3
@@ -56,21 +55,5 @@ program main
 
         g = asin((x+1.)/(x-1.))/3.
     end function g
-
-    function maxDeriv(a, b, deriv, h)
-        real(8), intent(in) :: a, b, h
-        real(8) maxDeriv, x, act
-        procedure(funcion) :: deriv
-
-        maxDeriv = deriv(a)
-        x = a + h
-        do while (x <= b)
-            act = deriv(x)
-            if (act > maxDeriv) then
-                maxDeriv = act
-            end if
-            x = x + h
-        end do
-    end function maxDeriv
 
 end program main
