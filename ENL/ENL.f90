@@ -29,6 +29,26 @@ contains
         end do
     end function biseccion
 
+    function biseccionTolY(a, b, f, tol)
+        real(8), intent(in) :: a, b, tol
+        procedure(funcion) :: f
+        real(8) biseccionTolY, izq, der, fmedio
+
+        izq = a
+        der = b
+        biseccionTolY = (izq + der)/2.
+        fmedio = f(biseccionTolY)
+        do while (abs(fmedio) >= tol)
+            if (f(izq) * fmedio < 0.) then
+                der = biseccionTolY
+            else
+                izq = biseccionTolY
+            end if
+            biseccionTolY = (izq + der)/2.
+            fmedio = f(biseccionTolY)
+        end do
+    end function biseccionTolY
+
     function puntoFijo(x0, f, g, tol, max_iter)
         real(8), intent(in) :: x0, tol
         integer(4), intent(in) :: max_iter
