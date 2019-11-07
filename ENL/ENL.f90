@@ -100,6 +100,25 @@ contains
         newton = x
     end function newton
 
+    function newtonTolX(x0, f, df, tol, max_iter)
+        real(8), intent(in) :: x0, tol
+        integer(4), intent(in) :: max_iter
+        procedure(funcion) :: f, df
+        integer(4) i
+        real(8) error, x, xant, newtonTolX
+        
+        x = x0
+        error = tol + 1
+        i = 0
+        do while ((error >= tol) .AND. (i <= max_iter))
+            xant = x
+            x = x - f(x)/df(x)
+            error = abs(x - xant)
+            i = i + 1
+        end do
+        newtonTolX = x
+    end function newtonTolX
+
     subroutine plot(f, nombre, rango)
         character (LEN=*), intent(in) :: f, rango, nombre
         optional rango
