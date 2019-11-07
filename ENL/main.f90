@@ -1,7 +1,7 @@
 program main
     use ENL
     implicit none
-    real(8) a, b, tol, res, x0, lambda
+    real(8) a, b, tol, res, x0
     
     !call plot("cos(x)*cosh(x)+1", "[4:5]")
     a = -0.3
