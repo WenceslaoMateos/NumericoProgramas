@@ -19,7 +19,6 @@ program main
     b = -0.1
     x0 = -0.99
     tol = 1e-5
-    !El lambda a elegir depende del intervalo a buscar raiz.
     res = puntoFijoSistematico(x0, func, a, b, dfunc, tol, 200)
     write(*, *) "El resultado de punto fijo sistematico es: ", res
 
