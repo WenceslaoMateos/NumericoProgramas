@@ -217,10 +217,10 @@ contains
         end do
     end subroutine generarSistema
 
-    subroutine elipticas(res, x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha, f, tol)
+    function elipticas(x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha, f, tol)
         integer(4), intent(in) :: nx, my
         real(8), intent(in) :: x0, x1, y0, y1, tol
-        real(8), dimension(:), allocatable, intent(out) :: res
+        real(8), dimension((nx - 1) * (my - 1)) :: elipticas
         type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
         procedure(poisson) :: f
         real(8), dimension(:), allocatable :: term_ind, d, ud, bd, ld, rd, xini
@@ -330,9 +330,9 @@ contains
         end do
 
         xini = 0.
-        res = gaussSeidel2D(d, ud, bd, ld, rd, term_ind, n, xini, tol)
+        elipticas = gaussSeidel2D(d, ud, bd, ld, rd, term_ind, n, xini, tol)
         deallocate(term_ind, d, ud, bd, ld, rd, xini)
-    end subroutine elipticas
+    end function elipticas
 
     function generarDistribucion(nx, my, x0, x1, y0, y1, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
         integer(4), intent(in) :: nx, my

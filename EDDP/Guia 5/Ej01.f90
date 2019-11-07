@@ -5,44 +5,59 @@ program principal
 
     implicit none
     
-    real(8) x0, x1, y0, y1
+    real(8) x0, x1, y0, y1, tol
     integer(4) n, m, orden
     real(8), dimension(:, :), allocatable :: distribucion
-    type(frontera), dimension(:), allocatable :: superior, inferior, izquierda, derecha
     real(8), dimension(:), allocatable :: res
+    type(frontera), dimension(:), allocatable :: superior, inferior, izquierda, derecha
+    real(8), dimension(:, :), allocatable :: term_ind, xini
 
     x0 = 0.
-    x1 = 20.
+    x1 = 3.
     y0 = 0.
-    y1 = 10.
-    n = 501
-    m = 251
+    y1 = 3.
+    n = 3
+    m = 3
     orden = (n - 1) * (m - 1)
+    tol = 1e-5
 
     allocate(distribucion(1:m+1, 1:n+1))
+    allocate(term_ind(1:orden, 1), xini(1:orden, 1))
     allocate(superior(1:n-1), inferior(1:n-1))
     allocate(izquierda(1:m-1), derecha(1:m-1))
     
-    superior%valor = 0.
-    inferior%valor = 0.
-    izquierda%valor = 0.
-    derecha%valor = 100.
+    superior(1)%valor = 2.3
+    superior(2)%valor = 4.4
+
+    inferior(1)%valor = 2.3
+    inferior(2)%valor = 3.4
+
+    izquierda%valor = 1.2
+
+    derecha(1)%valor = 6.5
+    derecha(2)%valor = 5.5
+
     superior%tipo = DIRICHLET
     inferior%tipo = DIRICHLET
     izquierda%tipo = DIRICHLET
     derecha%tipo = DIRICHLET
-    res = elipticas(x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace, 0.00001_8)
-    
-    ! call mostrarVector(res)
-    write (*, *)
+    res = elipticas(x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace, tol)
 
-    distribucion = generarDistribucion(n, m, x0, x1, y0, y1, res, 0._8, &
-        100._8, 0._8, 100._8, superior, inferior, izquierda, derecha)
-    ! call mostrarMatriz(distribucion, '(9F7.2)')
+    ! call mostrarMatriz(mat, '(21F7.2)')
+    ! write (*, *)
+    ! call mostrarMatriz(term_ind, '(F7.2)')
+    ! write (*, *)
+
+    ! call mostrarMatriz(res)
+    !write (*, *)
+
+    distribucion = generarDistribucion(n, m, x0, x1, y0, y1, res, 1.2_8, &
+        7.5_8, 1.2_8, 4.5_8, superior, inferior, izquierda, derecha)
+    call mostrarMatriz(distribucion, '(9F7.2)')
     call grabarDatos(distribucion, x0, x1, y0, y1, n, m, 'valores.dat')
     call plot('valores.dat')
 
-    deallocate(distribucion, superior, inferior, izquierda, derecha, res)
+    deallocate(distribucion, superior, inferior, izquierda, derecha, term_ind, xini, res)
 
 contains
 
