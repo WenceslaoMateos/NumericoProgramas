@@ -62,7 +62,7 @@ contains
         integer(4), intent(in) :: n, m
         real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: gaussSeidelElipticas, xant
         real(8) e1
-        integer(4) i, j, orden, cont
+        integer(4) i, orden, cont
 
         gaussSeidelElipticas = xini
         orden = size(gaussSeidelElipticas, dim=1)
@@ -216,6 +216,123 @@ contains
             end if
         end do
     end subroutine generarSistema
+
+    subroutine elipticas(res, x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha, f, tol)
+        integer(4), intent(in) :: nx, my
+        real(8), intent(in) :: x0, x1, y0, y1, tol
+        real(8), dimension(:), allocatable, intent(out) :: res
+        type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
+        procedure(poisson) :: f
+        real(8), dimension(:), allocatable :: term_ind, d, ud, bd, ld, rd, xini
+        integer(4) desde, hasta, i, n, m, offset, orden
+        real(8) h, k, x, y
+
+        h = (x1 - x0) / nx
+        k = (y1 - y0) / my
+        n = nx - 1
+        m = my - 1
+        orden = n * m
+        allocate(term_ind(orden), d(orden), ud(orden), bd(orden), ld(orden), rd(orden), xini(orden))
+        ud = 0.
+        bd = 0.
+        ld = 0.
+        rd = 0.
+
+        ! Iniciacion de terminos independientes
+        x = x0
+        y = y1
+        do i = 1, size(term_ind, dim=1)
+            if (mod(i, n) == 1) then
+                x = x0 + h
+                y = y - k
+            else
+                x = x + h
+            end if
+            term_ind(i) = f(x, y) * h**2. * k**2
+        end do
+
+        ! ---------------GENERACION DE TERMINOS INDEPENDIENTES--------------- !
+        ! Condiciones superiores
+        desde = 1
+        hasta = n
+        do i = desde, hasta
+            if (superior(i)%tipo == DIRICHLET) then
+                term_ind(i) = term_ind(i) - superior(i)%valor * h**2.
+            elseif (superior(i)%tipo == NEUMANN) then
+                term_ind(i) = term_ind(i) - 2. * k * superior(i)%valor
+                ud(i) = h**2.
+            end if
+        end do
+
+        ! Condiciones inferiores
+        desde = n * (m - 1) + 1
+        hasta = n * m
+        offset = 0
+        do i = desde, hasta
+            offset = offset + 1
+            if (inferior(offset)%tipo == DIRICHLET) then
+                term_ind(i) = term_ind(i) - inferior(offset)%valor * h**2.
+            elseif (inferior(offset)%tipo == NEUMANN) then
+                term_ind(i) = term_ind(i) + 2. * k * inferior(offset)%valor
+                bd(i) = h**2.
+            end if
+        end do
+
+        ! Condiciones izquierda
+        desde = 1
+        hasta = n * (m - 1) + 1
+        offset = 0
+        do i = desde, hasta, n
+            offset = offset + 1
+            if (izquierda(offset)%tipo == DIRICHLET) then
+                term_ind(i) = term_ind(i) - izquierda(offset)%valor * k**2.
+            elseif (izquierda(offset)%tipo == NEUMANN) then
+                term_ind(i) = term_ind(i) + 2. * h * izquierda(offset)%valor
+                ld(i) = k**2.
+            end if
+        end do
+        
+        ! Condiciones derecha
+        desde = n
+        hasta = n * m
+        offset = 0
+        do i = desde, hasta, n
+            offset = offset + 1
+            if (derecha(offset)%tipo == DIRICHLET) then
+                term_ind(i) = term_ind(i) - derecha(offset)%valor * k**2.
+            elseif (derecha(offset)%tipo == NEUMANN) then
+                term_ind(i) = term_ind(i) - 2. * h * derecha(offset)%valor
+                rd(i) = k**2.
+            end if
+        end do
+
+        ! ----------------------GENERACION DE DIAGONAL---------------------- !
+        d = -2. * (h**2. + k**2.)
+
+        ! Banda superiores
+        ud(2:orden) = ud(2:orden) + h**2.
+
+        ! Banda inferiores
+        bd(1:n*(m-1)) = bd(1:n*(m-1)) + h**2.
+
+        ! Banda izquierda
+        do i = 2,orden
+            if (mod(i, n) /= 1) then
+                ld(i) = ld(i) + k**2.
+            end if
+        end do
+
+        ! Banda derecha
+        do i = 1, orden - 1
+            if (mod(i, n) /= 0) then
+                rd(i) = rd(i) + k**2.
+            end if
+        end do
+
+        xini = 0.
+        res = gaussSeidel2D(d, ud, bd, ld, rd, term_ind, n, xini, tol)
+        deallocate(term_ind, d, ud, bd, ld, rd, xini)
+    end subroutine elipticas
 
     function generarDistribucion(nx, my, x0, x1, y0, y1, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
         integer(4), intent(in) :: nx, my

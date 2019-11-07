@@ -16,6 +16,13 @@ module SELs
             real(8) solucionDirecto(size(term_ind, dim=1), size(term_ind, dim=2))
         end function
     end interface
+
+    abstract interface
+        function vNorma(arreglo)
+            real(8), dimension(:), intent(in) :: arreglo
+            real(8) vNorma
+        end function
+    end interface
     
     abstract interface
         function mNorma(matriz)
@@ -331,6 +338,46 @@ function relajacion(matriz, term_ind, xini, tol)
     write(*, *) "Itereaciones: ", cont
 end function relajacion
 
+function gaussSeidel2D(d, ud, bd, ld, rd, term_ind, columnas, xini, tol)
+    real(8), dimension(:), intent(in) :: d, ud, bd, ld, rd, term_ind, xini
+    real(8), intent(in) :: tol
+    real(8), dimension(size(term_ind)) :: gaussSeidel2D, xant
+    real(8) e1
+    integer(4) i, orden, cont, columnas, filas
+
+    gaussSeidel2D = xini
+    orden = size(gaussSeidel2D, dim=1)
+    e1 = tol + 1
+    cont = 0
+    filas = orden / columnas
+    do while(e1 > tol)
+        xant = gaussSeidel2D
+        do i = 1, orden
+            gaussSeidel2D(i) = term_ind(i)
+            ! tiene izquierda
+            if (mod(i, columnas) /= 1) then
+                gaussSeidel2D(i) = gaussSeidel2D(i) - ld(i) * gaussSeidel2D(i-1)
+            end if
+            ! tiene derecha
+            if (mod(i, columnas) /= 0) then
+                gaussSeidel2D(i) = gaussSeidel2D(i) - rd(i) * gaussSeidel2D(i+1)
+            end if
+            ! tiene arriba
+            if (i > columnas) then
+                gaussSeidel2D(i) = gaussSeidel2D(i) - ud(i) * gaussSeidel2D(i-columnas)
+            end if
+            ! tiene abajo
+            if (i / columnas + 1 < filas) then
+                gaussSeidel2D(i) = gaussSeidel2D(i) - bd(i) * gaussSeidel2D(i+columnas)
+            end if
+            gaussSeidel2D(i) = gaussSeidel2D(i) / d(i)
+        end do
+        e1 = errorRelativoV(gaussSeidel2D, xant, vNormaM)
+        cont = cont + 1
+    end do
+    write(*, *) "Iteraciones: ", cont
+end function gaussSeidel2D
+
 function identidad(orden)
     integer(4), intent(in) :: orden
     integer(4) i
@@ -402,6 +449,22 @@ function condicion(matriz, norma)
 
     condicion = norma(matriz) * norma(matrizInversa(matriz))
 end function condicion
+
+function errorAbsolutoV(V, Vper, norma)
+    real(8), dimension(:), intent(in) :: V, Vper
+    procedure(vNorma) :: norma
+    real(8) errorAbsolutoV
+
+    errorAbsolutoV = norma(V - Vper)
+end function errorAbsolutoV
+
+function errorRelativoV(V, Vper, norma)
+    real(8), dimension(:), intent(in) :: V, Vper
+    procedure(vNorma) :: norma
+    real(8) errorRelativoV
+
+    errorRelativoV = errorAbsolutoV(V, Vper, norma) / norma(V)
+end function errorRelativoV
 
 function errorAbsoluto(A, Aper, norma)
     real(8), dimension(:, :), intent(in) :: A, Aper
