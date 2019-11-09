@@ -378,6 +378,62 @@ function gaussSeidel2D(d, ud, bd, ld, rd, term_ind, columnas, xini, tol)
     write(*, *) "Iteraciones: ", cont
 end function gaussSeidel2D
 
+function gaussSeidelMatricial(d, ud, bd, ld, rd, term_ind, xini, tol)
+    real(8), dimension(:, :), intent(in) :: d, ud, bd, ld, rd, term_ind, xini
+    real(8), intent(in) :: tol
+    real(8), dimension(size(xini, dim=1), size(xini, dim=2)) :: gaussSeidelMatricial, xant
+    real(8) e1
+    integer(4) i, j, orden, cont, columnas, filas
+
+    gaussSeidelMatricial = xini
+    e1 = tol + 1
+    cont = 0
+    filas = size(xini, dim=1)
+    columnas = size(xini, dim=2)
+    do while(e1 > tol)
+        xant = gaussSeidelMatricial
+
+        ! Primera fila
+        gaussSeidelMatricial(1, 1) = (term_ind(1, 1) - rd(1, 1)*gaussSeidelMatricial(1, 2) &
+            - bd(1, 1)*gaussSeidelMatricial(2, 1)) / d(1, 1)
+        do j = 2, columnas - 1
+            gaussSeidelMatricial(1, j) = (term_ind(1, j) - ld(1, j)*gaussSeidelMatricial(1, j-1) &
+                - rd(1, j)*gaussSeidelMatricial(1, j+1) - bd(1, j)*gaussSeidelMatricial(2, j)) / d(1, j)
+        end do
+        gaussSeidelMatricial(1, columnas) = (term_ind(1, columnas) - ld(1, columnas)*gaussSeidelMatricial(1, columnas-1) &
+            - bd(1, columnas)*gaussSeidelMatricial(2, columnas)) / d(1, columnas)
+
+        ! Filas intermedias
+        do i = 2, filas - 1
+            gaussSeidelMatricial(i, 1) = (term_ind(i, 1) - rd(i, 1)*gaussSeidelMatricial(i, 2) &
+                - ud(i, 1)*gaussSeidelMatricial(i-1, 1) - bd(i, 1)*gaussSeidelMatricial(i+1, 1)) / d(i, 1)
+            do j = 2, columnas - 1
+                gaussSeidelMatricial(i, j) = (term_ind(i, j) &
+                    - ld(i, j)*gaussSeidelMatricial(i, j-1) - rd(i, j)*gaussSeidelMatricial(i, j+1) &
+                    - ud(i, j)*gaussSeidelMatricial(i-1, j) - bd(i, j)*gaussSeidelMatricial(i+1, j)) / d(i, j)
+            end do
+            gaussSeidelMatricial(i, columnas) = (term_ind(i, columnas) - ld(i, columnas)*gaussSeidelMatricial(i, columnas-1) &
+                - ud(i, columnas)*gaussSeidelMatricial(i-1, columnas) - bd(i, columnas)*gaussSeidelMatricial(i+1, columnas)) &
+                / d(i, columnas)
+        end do
+
+        ! Ultima fila
+        gaussSeidelMatricial(filas, 1) = (term_ind(filas, 1) - rd(filas, 1)*gaussSeidelMatricial(filas, 2) &
+            - ud(filas, 1)*gaussSeidelMatricial(filas-1, 1)) / d(filas, 1)
+        do j = 2, columnas - 1
+            gaussSeidelMatricial(filas, j) = (term_ind(filas, j) - ld(filas, j)*gaussSeidelMatricial(filas, j-1) &
+                - rd(filas, j)*gaussSeidelMatricial(filas, j+1) - ud(filas, j)*gaussSeidelMatricial(filas-1, j)) / d(filas, j)
+        end do
+        gaussSeidelMatricial(filas, columnas) = (term_ind(filas, columnas) &
+            - ld(filas, columnas)*gaussSeidelMatricial(filas, columnas-1) &
+            - ud(filas, columnas)*gaussSeidelMatricial(filas-1, columnas)) / d(filas, columnas)
+
+        e1 = errorRelativo(gaussSeidelMatricial, xant, mNormaM)
+        cont = cont + 1
+    end do
+    write(*, *) "Iteraciones: ", cont
+end function gaussSeidelMatricial
+
 function identidad(orden)
     integer(4), intent(in) :: orden
     integer(4) i

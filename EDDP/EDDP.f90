@@ -56,282 +56,175 @@ contains
 
 !--------------------------------ELIPTICAS--------------------------------!
 
-    function gaussSeidelElipticas(matriz, term_ind, xini, tol, n, m)
-        real(8), dimension(:, :), intent(in) :: matriz, term_ind, xini
-        real(8), intent(in) :: tol
-        integer(4), intent(in) :: n, m
-        real(8), dimension(size(term_ind, dim=1), size(term_ind, dim=2)) :: gaussSeidelElipticas, xant
-        real(8) e1
-        integer(4) i, orden, cont
-
-        gaussSeidelElipticas = xini
-        orden = size(gaussSeidelElipticas, dim=1)
-        e1 = tol + 1
-        cont = 0
-        do while(e1 > tol)
-            xant = gaussSeidelElipticas
-            do i = 1, orden
-                gaussSeidelElipticas(i, :) = term_ind(i, :)
-                ! tiene izquierda
-                if (mod(i, n) /= 1) then
-                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i-1) * gaussSeidelElipticas(i-1, :)
-                end if
-                ! tiene derecha
-                if (mod(i, n) /= 0) then
-                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i+1) * gaussSeidelElipticas(i+1, :)
-                end if
-                ! tiene arriba
-                if (i > n) then
-                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i-n) * gaussSeidelElipticas(i-n, :)
-                end if
-                ! tiene abajo
-                if (i / n + 1 < m) then
-                    gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) - matriz(i, i+n) * gaussSeidelElipticas(i+n, :)
-                end if
-                gaussSeidelElipticas(i, :) = gaussSeidelElipticas(i, :) / matriz(i, i)
-            end do
-            e1 = errorRelativo(gaussSeidelElipticas, xant, mNormaM)
-            cont = cont + 1
-        end do
-        write(*, *) "Iteraciones: ", cont
-    end function gaussSeidelElipticas
-
     function laplace(x, y)
         real(8), intent(in) :: x, y
         real(8) laplace
 
         laplace = 0.
     end function laplace
-    
-    subroutine generarSistema(mat, term_ind, x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha, f)
+
+    function elipticas(x0, xf, y0, yf, nx, my, superior, inferior, izquierda, derecha, si, sd, ii, id, f, tol)
         integer(4), intent(in) :: nx, my
-        real(8), intent(in) :: x0, x1, y0, y1
-        real(8), dimension(:, :), intent(out) :: mat, term_ind
-        type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
+        real(8), intent(in) :: x0, xf, y0, yf, tol
+        type(frontera), intent(in) :: si, sd, ii, id
+        type(frontera), dimension(1:nx-1), intent(in) :: superior, inferior
+        type(frontera), dimension(1:my-1), intent(in) :: izquierda, derecha
         procedure(poisson) :: f
-        integer(4) desde, hasta, i, n, m, offset
-        real(8) h, k, x, y
+        real(8), dimension(0:my, 0:nx) :: elipticas, term_ind, d, ud, bd, ld, rd, xini
+        integer(4) desde, hasta, i, j, offset
+        real(8) h, k, h2, k2, x, y
 
-        h = (x1 - x0) / nx
-        k = (y1 - y0) / my
-        n = nx - 1
-        m = my - 1
-        mat = 0.
+        h = (xf - x0) / nx
+        k = (yf - y0) / my
+        h2 = h**2.
+        k2 = k**2.
 
-        ! Iniciacion de terminos independientes
-        x = x0
-        y = y1
-        do i = 1, size(term_ind, dim=1)
-            if (mod(i, n) == 1) then
-                x = x0 + h
-                y = y - k
-            else
+        ! Nodos internos
+        y = yf
+        do j = 1, my - 1
+            y = y - k
+            x = x0
+            do i = 1, nx - 1
                 x = x + h
-            end if
-            term_ind(i, :) = f(x, y) * h**2. * k**2
+                term_ind(j, i) = f(x, y) * h2 * k2
+                d(j, i) = -2. * (h2 + k2)
+                ud(j, i) = h2
+                bd(j, i) = h2
+                ld(j, i) = k2
+                rd(j, i) = k2
+            end do
         end do
 
-        ! ---------------GENERACION DE TERMINOS INDEPENDIENTES--------------- !
-        ! Condiciones superiores
-        desde = 1
-        hasta = n
-        do i = desde, hasta
-            if (superior(i)%tipo == DIRICHLET) then
-                term_ind(i, :) = term_ind(i, :) - superior(i)%valor * h**2.
-            elseif (superior(i)%tipo == NEUMANN) then
-                term_ind(i, :) = term_ind(i, :) - 2. * k * superior(i)%valor
-                mat(i, i + n) = h**2.
-            end if
-        end do
+        ! Esquinas
+        ud(0, 0) = 0.
+        ld(0, 0) = 0.
+        if (si%tipo == DIRICHLET) then
+            term_ind(0, 0) = si%valor
+            d(0, 0) = 1.
+            bd(0, 0) = 0.
+            rd(0, 0) = 0.
+        elseif (si%tipo == NEUMANN) then
+            term_ind(0, 0) = f(x0, yf) * h2 * k2 + 2.*k2*h * si%valor - 2.*h2*k * si%valor
+            d(0, 0) = -2. * (h2 + k2)
+            bd(0, 0) = 2.*h2
+            rd(0, 0) = 2.*k2
+        end if
 
-        ! Condiciones inferiores
-        desde = n * (m - 1) + 1
-        hasta = n * m
-        offset = 0
-        do i = desde, hasta
-            offset = offset + 1
-            if (inferior(offset)%tipo == DIRICHLET) then
-                term_ind(i, :) = term_ind(i, :) - inferior(offset)%valor * h**2.
-            elseif (inferior(offset)%tipo == NEUMANN) then
-                term_ind(i, :) = term_ind(i, :) + 2. * k * inferior(offset)%valor
-                mat(i, i - n) = h**2.
-            end if
-        end do
+        ud(0, nx) = 0.
+        rd(0, nx) = 0.
+        if (sd%tipo == DIRICHLET) then
+            term_ind(0, nx) = sd%valor
+            d(0, nx) = 1.
+            bd(0, nx) = 0.
+            ld(0, nx) = 0.
+        elseif (sd%tipo == NEUMANN) then
+            term_ind(0, nx) = f(xf, yf) * h2 * k2 - 2.*k2*h * sd%valor - 2.*h2*k * sd%valor
+            d(0, nx) = -2. * (h2 + k2)
+            bd(0, nx) = 2.*h2
+            ld(0, nx) = 2.*k2
+        end if
 
-        ! Condiciones izquierda
-        desde = 1
-        hasta = n * (m - 1) + 1
-        offset = 0
-        do i = desde, hasta, n
-            offset = offset + 1
-            if (izquierda(offset)%tipo == DIRICHLET) then
-                term_ind(i, :) = term_ind(i, :) - izquierda(offset)%valor * k**2.
-            elseif (izquierda(offset)%tipo == NEUMANN) then
-                term_ind(i, :) = term_ind(i, :) + 2. * h * izquierda(offset)%valor
-                mat(i, i + 1) = k**2.
-            end if
-        end do
-        
-        ! Condiciones derecha
-        desde = n
-        hasta = n * m
-        offset = 0
-        do i = desde, hasta, n
-            offset = offset + 1
-            if (derecha(offset)%tipo == DIRICHLET) then
-                term_ind(i, :) = term_ind(i, :) - derecha(offset)%valor * k**2.
-            elseif (derecha(offset)%tipo == NEUMANN) then
-                term_ind(i, :) = term_ind(i, :) - 2. * h * derecha(offset)%valor
-                mat(i, i - 1) = k**2.
-            end if
-        end do
+        bd(my, 0) = 0.
+        ld(my, 0) = 0.
+        if (ii%tipo == DIRICHLET) then
+            term_ind(my, 0) = ii%valor
+            d(my, 0) = 1.
+            ud(my, 0) = 0.
+            rd(my, 0) = 0.
+        elseif (ii%tipo == NEUMANN) then
+            term_ind(my, 0) = f(x0, y0) * h2 * k2 + 2.*k2*h * ii%valor + 2.*h2*k * ii%valor
+            d(my, 0) = -2. * (h2 + k2)
+            ud(my, 0) = 2.*h2
+            rd(my, 0) = 2.*k2
+        end if
 
-        ! ----------------------GENERACION DE DIAGONAL---------------------- !
-        do i = 1, n * m
-            mat(i, i) = -2. * (h**2. + k**2.)
-        end do
+        bd(my, nx) = 0.
+        rd(my, nx) = 0.
+        if (id%tipo == DIRICHLET) then
+            term_ind(my, nx) = id%valor
+            d(my, nx) = 1.
+            ud(my, nx) = 0.
+            ld(my, nx) = 0.
+        elseif (id%tipo == NEUMANN) then
+            term_ind(my, nx) = f(xf, y0) * h2 * k2 - 2.*k2*h * id%valor + 2.*h2*k * id%valor
+            d(my, nx) = -2. * (h2 + k2)
+            ud(my, nx) = 2.*h2
+            ld(my, nx) = 2.*k2
+        end if
 
-        ! ------------------------GENERACION DE UNOS------------------------ !
-        ! Banda superiores
-        do i = n + 1, n * m
-            mat(i, i - n) = mat(i, i - n) + h**2.
-        end do
-
-        ! Banda inferiores
-        do i = 1, n * (m - 1)
-            mat(i, i + n) = mat(i, i + n) + h**2.
-        end do
-
-        ! Banda izquierda
-        do i = 2, n * m
-            if (mod(i, n) /= 1) then
-                mat(i, i - 1) = mat(i, i - 1) + k**2.
-            end if
-        end do
-
-        ! Banda derecha
-        do i = 1, n * m - 1
-            if (mod(i, n) /= 0) then
-                mat(i, i + 1) = mat(i, i + 1) + k**2.
-            end if
-        end do
-    end subroutine generarSistema
-
-    function elipticas(x0, x1, y0, y1, nx, my, superior, inferior, izquierda, derecha, f, tol)
-        integer(4), intent(in) :: nx, my
-        real(8), intent(in) :: x0, x1, y0, y1, tol
-        real(8), dimension((nx - 1) * (my - 1)) :: elipticas
-        type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
-        procedure(poisson) :: f
-        real(8), dimension(:), allocatable :: term_ind, d, ud, bd, ld, rd, xini
-        integer(4) desde, hasta, i, n, m, offset, orden
-        real(8) h, k, x, y
-
-        h = (x1 - x0) / nx
-        k = (y1 - y0) / my
-        n = nx - 1
-        m = my - 1
-        orden = n * m
-        allocate(term_ind(orden), d(orden), ud(orden), bd(orden), ld(orden), rd(orden), xini(orden))
-        ud = 0.
-        bd = 0.
-        ld = 0.
-        rd = 0.
-
-        ! Iniciacion de terminos independientes
+        ! Bordes
         x = x0
-        y = y1
-        do i = 1, size(term_ind, dim=1)
-            if (mod(i, n) == 1) then
-                x = x0 + h
-                y = y - k
-            else
-                x = x + h
-            end if
-            term_ind(i) = f(x, y) * h**2. * k**2
-        end do
+        do i = 1, nx - 1
+            x = x + h
 
-        ! ---------------GENERACION DE TERMINOS INDEPENDIENTES--------------- !
-        ! Condiciones superiores
-        desde = 1
-        hasta = n
-        do i = desde, hasta
+            ud(0, i) = 0.
             if (superior(i)%tipo == DIRICHLET) then
-                term_ind(i) = term_ind(i) - superior(i)%valor * h**2.
+                term_ind(0, i) = superior(i)%valor
+                d(0, i) = 1.
+                bd(0, i) = 0.
+                ld(0, i) = 0.
+                rd(0, i) = 0.
             elseif (superior(i)%tipo == NEUMANN) then
-                term_ind(i) = term_ind(i) - 2. * k * superior(i)%valor
-                ud(i) = h**2.
+                term_ind(my, i) = f(x, yf) * h2 * k2 - 2.*h2*k * superior(i)%valor
+                d(0, i) = -2. * (h2 + k2)
+                bd(0, i) = 2.*h2
+                ld(0, i) = k2
+                rd(0, i) = k2
+            end if
+
+            bd(my, i) = 0.
+            if (inferior(i)%tipo == DIRICHLET) then
+                term_ind(0, i) = inferior(i)%valor
+                d(my, i) = 1.
+                ud(my, i) = 0.
+                ld(my, i) = 0.
+                rd(my, i) = 0.
+            elseif (inferior(i)%tipo == NEUMANN) then
+                term_ind(my, i) = f(x, y0) * h2 * k2 + 2.*h2*k * inferior(i)%valor
+                d(my, i) = -2. * (h2 + k2)
+                ud(my, i) = 2.*h2
+                ld(my, i) = k2
+                rd(my, i) = k2
             end if
         end do
 
-        ! Condiciones inferiores
-        desde = n * (m - 1) + 1
-        hasta = n * m
-        offset = 0
-        do i = desde, hasta
-            offset = offset + 1
-            if (inferior(offset)%tipo == DIRICHLET) then
-                term_ind(i) = term_ind(i) - inferior(offset)%valor * h**2.
-            elseif (inferior(offset)%tipo == NEUMANN) then
-                term_ind(i) = term_ind(i) + 2. * k * inferior(offset)%valor
-                bd(i) = h**2.
+        y = yf
+        do j = 1, my - 1
+            y = y - k
+
+            ld(j, 0) = 0.
+            if (izquierda(j)%tipo == DIRICHLET) then
+                term_ind(j, 0) = izquierda(j)%valor
+                d(j, 0) = 1.
+                ud(j, 0) = 0.
+                bd(j, 0) = 0.
+                rd(j, 0) = 0.
+            elseif (izquierda(j)%tipo == NEUMANN) then
+                term_ind(j, 0) = f(x0, y) * h2 * k2 + 2.*k2*h * izquierda(j)%valor
+                d(j, 0) = -2. * (h2 + k2)
+                ud(j, 0) = h2
+                bd(j, 0) = h2
+                rd(j, 0) = 2.*k2
             end if
-        end do
 
-        ! Condiciones izquierda
-        desde = 1
-        hasta = n * (m - 1) + 1
-        offset = 0
-        do i = desde, hasta, n
-            offset = offset + 1
-            if (izquierda(offset)%tipo == DIRICHLET) then
-                term_ind(i) = term_ind(i) - izquierda(offset)%valor * k**2.
-            elseif (izquierda(offset)%tipo == NEUMANN) then
-                term_ind(i) = term_ind(i) + 2. * h * izquierda(offset)%valor
-                ld(i) = k**2.
-            end if
-        end do
-        
-        ! Condiciones derecha
-        desde = n
-        hasta = n * m
-        offset = 0
-        do i = desde, hasta, n
-            offset = offset + 1
-            if (derecha(offset)%tipo == DIRICHLET) then
-                term_ind(i) = term_ind(i) - derecha(offset)%valor * k**2.
-            elseif (derecha(offset)%tipo == NEUMANN) then
-                term_ind(i) = term_ind(i) - 2. * h * derecha(offset)%valor
-                rd(i) = k**2.
-            end if
-        end do
-
-        ! ----------------------GENERACION DE DIAGONAL---------------------- !
-        d = -2. * (h**2. + k**2.)
-
-        ! Banda superiores
-        ud(2:orden) = ud(2:orden) + h**2.
-
-        ! Banda inferiores
-        bd(1:n*(m-1)) = bd(1:n*(m-1)) + h**2.
-
-        ! Banda izquierda
-        do i = 2,orden
-            if (mod(i, n) /= 1) then
-                ld(i) = ld(i) + k**2.
-            end if
-        end do
-
-        ! Banda derecha
-        do i = 1, orden - 1
-            if (mod(i, n) /= 0) then
-                rd(i) = rd(i) + k**2.
+            rd(j, nx) = 0.
+            if (derecha(j)%tipo == DIRICHLET) then
+                term_ind(j, nx) = derecha(j)%valor
+                d(j, nx) = 1.
+                ud(j, nx) = 0.
+                bd(j, nx) = 0.
+                ld(j, nx) = 0.
+            elseif (derecha(j)%tipo == NEUMANN) then
+                term_ind(j, nx) = f(xf, y) * h2 * k2 - 2.*k2*h * derecha(j)%valor
+                d(j, nx) = -2. * (h2 + k2)
+                ud(j, nx) = h2
+                bd(j, nx) = h2
+                ld(j, nx) = 2.*k2
             end if
         end do
 
         xini = 0.
-        elipticas = gaussSeidel2D(d, ud, bd, ld, rd, term_ind, n, xini, tol)
-        deallocate(term_ind, d, ud, bd, ld, rd, xini)
+        elipticas = gaussSeidelMatricial(d, ud, bd, ld, rd, term_ind, xini, tol)
     end function elipticas
 
     function generarDistribucion(nx, my, x0, x1, y0, y1, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
