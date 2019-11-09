@@ -10,11 +10,6 @@ module EDDP
         real(8) valor
     end type frontera
 
-    type frontera2
-        integer(4) tipo
-        procedure(funcionContorno), pointer, nopass :: valor
-    end type frontera2
-
     type ProblemaParabolicas
         real(8) t0, tf, dt, x0, xf, dx
         integer(4) particionx, particiont
@@ -31,13 +26,6 @@ module EDDP
         end function
     end interface
     
-    abstract interface
-        function funcionContorno(x, t, algo)
-            real(8), intent(in) :: x, t, algo
-            real(8) funcionContorno
-        end function funcionContorno
-    end interface
-
     abstract interface
         function poisson(x, y)
             real(8), intent(in) :: x, y
@@ -226,59 +214,6 @@ contains
         xini = 0.
         elipticas = gaussSeidelMatricial(d, ud, bd, ld, rd, term_ind, xini, tol)
     end function elipticas
-
-    function generarDistribucion(nx, my, x0, x1, y0, y1, resul, si, sd, ii, id, superior, inferior, izquierda, derecha)
-        integer(4), intent(in) :: nx, my
-        type(frontera), dimension(:), intent(in) :: superior, inferior, izquierda, derecha
-        real(8), intent(in) :: resul(1:(nx - 1) * (my - 1)), si, sd, ii, id, x0, x1, y0, y1
-        real(8) generarDistribucion(1:my+1, 1:nx+1), h, k
-        integer(4) i, offset
-
-        h = (x1 - x0) / nx
-        k = (y1 - y0) / my
-
-        ! Interno
-        offset = 0
-        do i = 2, my
-            generarDistribucion(i, 2:nx) = resul(1+offset:nx-1)
-            offset = offset + nx - 1
-        end do
-
-        ! Esquinas
-        generarDistribucion(1, 1) = si
-        generarDistribucion(1, nx+1) = sd
-        generarDistribucion(my+1, 1) = ii
-        generarDistribucion(my+1, nx+1) = id
-
-        ! Bordes
-        do i = 2, nx
-            if (superior(i - 1)%tipo == DIRICHLET) then
-                generarDistribucion(1, i) = superior(i - 1)%valor
-            elseif (superior(i - 1)%tipo == NEUMANN) then
-                generarDistribucion(1, i) = generarDistribucion(3, i) + 2. * k * superior(i - 1)%valor
-            end if
-
-            if (inferior(i - 1)%tipo == DIRICHLET) then
-                generarDistribucion(my + 1, i) = inferior(i - 1)%valor
-            elseif (inferior(i - 1)%tipo == NEUMANN) then
-                generarDistribucion(my + 1, i) = generarDistribucion(my - 1, i) - 2. * k * inferior(i - 1)%valor
-            end if
-        end do
-
-        do i = 2, my
-            if (izquierda(i - 1)%tipo == DIRICHLET) then
-                generarDistribucion(i, 1) = izquierda(i - 1)%valor
-            elseif (izquierda(i - 1)%tipo == NEUMANN) then
-                generarDistribucion(i, 1) = generarDistribucion(i, 3) - 2. * h * izquierda(i - 1)%valor
-            end if
-
-            if (derecha(i - 1)%tipo == DIRICHLET) then
-                generarDistribucion(i, nx + 1) = derecha(i - 1)%valor
-            else if (derecha(i - 1)%tipo == NEUMANN) then
-                generarDistribucion(i, nx + 1) = generarDistribucion(i, nx - 1) + 2. * h * derecha(i - 1)%valor
-            end if
-        end do
-    end function generarDistribucion
 
     subroutine grabarDatos(distribucion, x0, x1, y0, y1, nx, my, archivo)
         intent(in) :: distribucion, x0, x1, y0, y1, nx, my, archivo
