@@ -153,7 +153,7 @@ contains
                 ld(0, i) = 0.
                 rd(0, i) = 0.
             elseif (superior(i)%tipo == NEUMANN) then
-                term_ind(my, i) = f(x, yf) * h2 * k2 - 2.*h2*k * superior(i)%valor
+                term_ind(0, i) = f(x, yf) * h2 * k2 - 2.*h2*k * superior(i)%valor
                 d(0, i) = -2. * (h2 + k2)
                 bd(0, i) = 2.*h2
                 ld(0, i) = k2
@@ -162,7 +162,7 @@ contains
 
             bd(my, i) = 0.
             if (inferior(i)%tipo == DIRICHLET) then
-                term_ind(0, i) = inferior(i)%valor
+                term_ind(my, i) = inferior(i)%valor
                 d(my, i) = 1.
                 ud(my, i) = 0.
                 ld(my, i) = 0.

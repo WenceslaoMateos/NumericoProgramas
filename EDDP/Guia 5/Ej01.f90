@@ -6,11 +6,10 @@ program principal
     implicit none
     
     real(8) x0, x1, y0, y1, tol
-    integer(4) n, m, orden
+    integer(4) n, m
     real(8), dimension(:, :), allocatable :: distribucion
-    real(8), dimension(:), allocatable :: res
+    type(frontera) si, sd, ii, id
     type(frontera), dimension(:), allocatable :: superior, inferior, izquierda, derecha
-    real(8), dimension(:, :), allocatable :: term_ind, xini
 
     x0 = 0.
     x1 = 3.
@@ -18,22 +17,16 @@ program principal
     y1 = 3.
     n = 3
     m = 3
-    orden = (n - 1) * (m - 1)
     tol = 1e-5
 
-    allocate(distribucion(1:m+1, 1:n+1))
-    allocate(term_ind(1:orden, 1), xini(1:orden, 1))
     allocate(superior(1:n-1), inferior(1:n-1))
     allocate(izquierda(1:m-1), derecha(1:m-1))
     
     superior(1)%valor = 2.3
     superior(2)%valor = 4.4
-
     inferior(1)%valor = 2.3
     inferior(2)%valor = 3.4
-
     izquierda%valor = 1.2
-
     derecha(1)%valor = 6.5
     derecha(2)%valor = 5.5
 
@@ -41,32 +34,25 @@ program principal
     inferior%tipo = DIRICHLET
     izquierda%tipo = DIRICHLET
     derecha%tipo = DIRICHLET
-    res = elipticas(x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace, tol)
 
-    ! call mostrarMatriz(mat, '(21F7.2)')
-    ! write (*, *)
-    ! call mostrarMatriz(term_ind, '(F7.2)')
-    ! write (*, *)
+    si%valor = 1.2
+    si%tipo = DIRICHLET
+    sd%valor = 7.5
+    sd%tipo = DIRICHLET
+    ii%valor = 1.2
+    ii%tipo = DIRICHLET
+    id%valor = 4.5
+    id%tipo = DIRICHLET
 
-    ! call mostrarMatriz(res)
-    !write (*, *)
-
-    distribucion = generarDistribucion(n, m, x0, x1, y0, y1, res, 1.2_8, &
-        7.5_8, 1.2_8, 4.5_8, superior, inferior, izquierda, derecha)
-    call mostrarMatriz(distribucion, '(9F7.2)')
+    distribucion = elipticas(x0, x1, y0, y1, n, m, &
+        superior, inferior, izquierda, derecha, si, sd, ii, id, &
+        laplace, tol)
     call grabarDatos(distribucion, x0, x1, y0, y1, n, m, 'valores.dat')
     call plot('valores.dat')
 
-    deallocate(distribucion, superior, inferior, izquierda, derecha, term_ind, xini, res)
+    deallocate(distribucion, superior, inferior, izquierda, derecha)
 
 contains
-
-    function f(x, y)
-        real(8), intent(in) :: x, y
-        real(8) f
-
-        f = x / y
-    end function
 
     subroutine plot(archivo)
         character(len=*), intent(in) :: archivo

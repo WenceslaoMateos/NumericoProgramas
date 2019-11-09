@@ -7,70 +7,55 @@ program principal
     
     !no tocar
     real(8) x0, x1, y0, y1, tol
-    integer(4) n, m, orden
+    integer(4) n, m
     real(8), dimension(:, :), allocatable :: distribucion
-    real(8), dimension(:), allocatable :: res
+    type(frontera) si, sd, ii, id
     type(frontera), dimension(:), allocatable :: superior, inferior, izquierda, derecha
-    real(8), dimension(:, :), allocatable :: term_ind, xini
 
     !tocar
     x0 = 0.
-    x1 = 20.
+    x1 = 15.
     y0 = 0.
-    y1 = 10.
-    n = 6
-    m = 3
+    y1 = 12.
+    n = 5
+    m = 4
     tol = 1e-5
 
     !no tocar
-    orden = (n - 1) * (m - 1)
-    allocate(distribucion(1:m+1, 1:n+1))
-    allocate(term_ind(1:orden, 1), xini(1:orden, 1))
     allocate(superior(1:n-1), inferior(1:n-1))
     allocate(izquierda(1:m-1), derecha(1:m-1))
     
     !tocar
-    superior%valor = 20.
+    superior%valor = 100.
     inferior%valor = 20.
-    izquierda%valor = 100.
+    izquierda%valor = 20.
     derecha%valor = 20.
-
-    !tocar
     superior%tipo = DIRICHLET
     inferior%tipo = DIRICHLET
     izquierda%tipo = DIRICHLET
     derecha%tipo = DIRICHLET
 
-    !tocar solo la funcion a pasar de parametro
-    res = elipticas(x0, x1, y0, y1, n, m, superior, inferior, izquierda, derecha, laplace, tol)
+    si%valor = 100.
+    si%tipo = DIRICHLET
+    sd%valor = 100.
+    sd%tipo = DIRICHLET
+    ii%valor = 20.
+    ii%tipo = DIRICHLET
+    id%valor = 20.
+    id%tipo = DIRICHLET
 
-    ! call mostrarMatriz(mat, '(21F7.2)')
-    ! write (*, *)
-    ! call mostrarMatriz(term_ind, '(F7.2)')
-    ! write (*, *)
+    !tocar solo la funcion de parametro
+    distribucion = elipticas(x0, x1, y0, y1, n, m, &
+        superior, inferior, izquierda, derecha, si, sd, ii, id, &
+        laplace, tol)
 
-    ! call mostrarMatriz(res)
-    !write (*, *)
-
-    !tocar solo las esquinas
-    distribucion = generarDistribucion(n, m, x0, x1, y0, y1, res, 100._8, &
-        0._8, 100._8, 0._8, superior, inferior, izquierda, derecha)
-
-    call mostrarMatriz(distribucion, '(9F7.2)')
     call grabarDatos(distribucion, x0, x1, y0, y1, n, m, 'valores.dat')
     call plot('valores.dat')
 
     !no tocar
-    deallocate(distribucion, superior, inferior, izquierda, derecha, term_ind, xini, res)
+    deallocate(distribucion, superior, inferior, izquierda, derecha)
 
 contains
-
-    function f(x, y)
-        real(8), intent(in) :: x, y
-        real(8) f
-
-        f = x / y
-    end function
 
     subroutine plot(archivo)
         character(len=*), intent(in) :: archivo
