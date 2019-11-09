@@ -1,0 +1,5 @@
+gfortran -g -c ../../arreglos.f90
+gfortran -g -c ../../SEL/SELs.f90
+gfortran -g -c ../EDDP.f90
+gfortran -g arreglos.o SELs.o EDDP.o $1 -o $(basename $1 .f90)
+./$(basename $1 .f90)
