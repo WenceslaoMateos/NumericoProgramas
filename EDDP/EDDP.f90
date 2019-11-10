@@ -11,14 +11,14 @@ module EDDP
     end type frontera
 
     type ProblemaParabolicas
-        real(8) t0, tf, dt, x0, xf, dx
+        real(8) t0, tf, dt, x0, xf, dx, t
         integer(4) particionx, particiont
         real(8), dimension(:), allocatable :: iniciales, u
         procedure(discretizacionParabolicas), pointer, nopass :: calculoInterno, calculoIzquierda, calculoDerecha
     end type ProblemaParabolicas
 
     type ParabolicasImplicito
-        real(8) t0, tf, dt, x0, xf, dx
+        real(8) t0, tf, dt, x0, xf, dx, t
         integer(4) particionx, particiont
         real(8), dimension(:), allocatable :: iniciales, u
         procedure(ecuacionImplicito), pointer, nopass :: ecInterno, ecIzquierda, ecDerecha
@@ -321,7 +321,6 @@ contains
         character(len=*), intent(in) :: archivo
         real(8), dimension(pp%particionx + 2) :: x
         real(8), dimension(size(pp%iniciales)) :: usig
-        real(8) t
         integer(4) n, i
 
         !escritura inicial en el archivo
@@ -338,19 +337,19 @@ contains
         !core de metodo explicito
         n = size(pp%iniciales)
         pp%u = pp%iniciales
-        t = pp%t0
-        write(2, *) t, pp%u
+        pp%t = pp%t0
+        write(2, *) pp%t, pp%u
 
         pp%dt = (pp%tf - pp%t0) / pp%particiont
-        do while(t <= pp%tf)
-            t = t + pp%dt
+        do while(pp%t <= pp%tf)
+            pp%t = pp%t + pp%dt
             usig(1) = pp%calculoIzquierda(pp, 1)
             do i = 2, n - 1
                 usig(i) = pp%calculoInterno(pp, i)
             end do
             usig(ubound(usig, 1)) = pp%calculoDerecha(pp, ubound(usig, 1))
             pp%u = usig
-            write(2, *) t, pp%u
+            write(2, *) pp%t, pp%u
         end do
         close(2)
     end subroutine explicito
@@ -415,7 +414,7 @@ contains
         character(len=*), intent(in) :: archivo
         real(8), dimension(pi%particionx + 2) :: x
         real(8), dimension(size(pi%iniciales)) :: d, ld, rd, term_ind
-        real(8) t, tol
+        real(8) tol
         integer(4) n, i
         
         !escitura inicial en el archivo
@@ -431,19 +430,19 @@ contains
 
         n = size(pi%iniciales)
         pi%u = pi%iniciales
-        t = pi%t0
-        write(2, *) t, pi%u
+        pi%t = pi%t0
+        write(2, *) pi%t, pi%u
         
         pi%dt = (pi%tf - pi%t0) / pi%particiont
-        do while(t <= pi%tf)
-            t = t + pi%dt
+        do while(pi%t <= pi%tf)
+            pi%t = pi%t + pi%dt
             call pi%ecIzquierda(pi, 1, d, ld, rd, term_ind)
             do i = 2, n - 1
                 call pi%ecInterno(pi, i, d, ld, rd, term_ind)
             end do
             call pi%ecDerecha(pi, n, d, ld, rd, term_ind)
             pi%u = gaussSeidel1D(d, ld, rd, term_ind, pi%u, tol)
-            write(2, *) t, pi%u
+            write(2, *) pi%t, pi%u
         end do
         close(2)
     end subroutine implicito
