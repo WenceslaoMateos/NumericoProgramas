@@ -9,7 +9,14 @@ module interpolacion
             real(8) ajusteMinCuad
         end function ajusteMinCuad
     end interface
-    
+
+    abstract interface
+        function funcionDerivadaNMas1(x)
+            real(8), intent(in) :: x
+            real(8) funcionDerivadaNMas1
+        end function funcionDerivadaNMas1
+    end interface
+
 contains
 
     function evaluarPolinomio(coeficientes, x)
@@ -330,5 +337,24 @@ contains
         end do 
         write(*, '(F12.8, A, I2)') coeficientes(orden), ' X^', orden         
     end subroutine mostrarPolinomio
+
+    !func es la derivada n+1 de la funcion real que estoy intentando aproximar
+    function calculaError(punto, x, derivada)
+        real(8), dimension(0:), intent(in) :: x
+        real(8), intent(in) :: punto
+        procedure(funcionDerivadaNMas1) :: derivada
+        real(8) calculaError, m
+        integer(4) n, i, fact
+
+        n = ubound(x, 1)
+        m = (x(n) - x(0))/2.
+        calculaError = punto - x(0)
+        fact = 1
+        do i = 1, n
+            calculaError = calculaError * (punto - x(i))
+            fact = fact * i
+        end do  
+        calculaError = calculaError * derivada(m) / (fact * (n+1))
+    end function calculaError
     
 end module interpolacion
