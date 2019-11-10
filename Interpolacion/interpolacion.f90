@@ -272,25 +272,34 @@ contains
         procedure(ajusteMinCuad) :: criterio
         real(8), dimension(:), allocatable :: nuevoMinimos, mejorMinimos
         real(8) vMejor, vNuevo
-        integer(4) i
+        integer(4) i, noMejoro
 
         mejorMinimos = minimosCuadrados(x, y, 1)
         vMejor = criterio(x, y, mejorMinimos)
         nuevoMinimos = minimosCuadrados(x, y, 2)
         vNuevo = criterio(x, y, nuevoMinimos)
-
-        i = 3
-        do while(i <= ubound(x, 1) .and. vMejor > vNuevo)
+        if (vMejor > vNuevo) then
+            noMejoro = 0
             vMejor = vNuevo
             mejorMinimos = nuevoMinimos
-            
+        else
+            noMejoro = 1
+        end if
+
+        i = 3
+        do while(i < ubound(x, 1) .and. noMejoro < 2)
             nuevoMinimos = minimosCuadrados(x, y, i)
             vNuevo = criterio(x, y, nuevoMinimos)
+            if (vMejor > vNuevo) then
+                noMejoro = 0
+                vMejor = vNuevo
+                mejorMinimos = nuevoMinimos
+            else
+                noMejoro = noMejoro + 1
+            end if
+
             i = i + 1 
         end do
-        if (i > ubound(x, 1) .and. vMejor > vNuevo) then
-            mejorMinimos = nuevoMinimos
-        end if
         allocate(coeficientes(0:ubound(mejorMinimos, 1) - 1))
         coeficientes = mejorMinimos
         deallocate(nuevoMinimos, mejorMinimos)
