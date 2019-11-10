@@ -372,7 +372,7 @@ function gaussSeidel2D(d, ud, bd, ld, rd, term_ind, columnas, xini, tol)
             end if
             gaussSeidel2D(i) = gaussSeidel2D(i) / d(i)
         end do
-        e1 = errorRelativoV(gaussSeidel2D, xant, vNormaM)
+        e1 = errorAbsolutoV(gaussSeidel2D, xant, vNormaM)
         cont = cont + 1
     end do
     write(*, *) "Iteraciones: ", cont
@@ -428,7 +428,7 @@ function gaussSeidelMatricial(d, ud, bd, ld, rd, term_ind, xini, tol)
             - ld(filas, columnas)*gaussSeidelMatricial(filas, columnas-1) &
             - ud(filas, columnas)*gaussSeidelMatricial(filas-1, columnas)) / d(filas, columnas)
 
-        e1 = errorRelativo(gaussSeidelMatricial, xant, mNormaM)
+        e1 = errorAbsoluto(gaussSeidelMatricial, xant, mNormaM)
         cont = cont + 1
     end do
     write(*, *) "Iteraciones: ", cont
