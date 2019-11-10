@@ -93,7 +93,7 @@ contains
         real(8), dimension(0:ubound(x, 1)) :: polinomioAproximante
         real(8), dimension(0:ubound(x, 1), 1) :: aux
         real(8), dimension(size(x), size(x)) :: matriz
-        real(8), dimension(size(x), 1) :: term_ind, xini
+        real(8), dimension(size(x), 1) :: term_ind
         integer(4) columna
         
         term_ind(:, 1) = y
@@ -101,7 +101,6 @@ contains
         do columna = 2, size(x)
             matriz(:, columna) = x ** (columna - 1)
         end do
-        xini = 0.
         !Tener cuidado a la hora de ejecutar el metodo, a veces es necesario pivotear
         !Usamos un metodo directo por que la matriz casi nunca va a ser diagonalmente dominante
         aux = solucionGaussJordan(matriz, term_ind)
