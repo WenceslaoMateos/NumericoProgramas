@@ -338,6 +338,30 @@ function relajacion(matriz, term_ind, xini, tol)
     write(*, *) "Itereaciones: ", cont
 end function relajacion
 
+function gaussSeidel1D(d, ld, rd, term_ind, xini, tol)
+    real(8), dimension(:), intent(in) :: d, ld, rd, term_ind, xini
+    real(8), intent(in) :: tol
+    real(8), dimension(size(term_ind)) :: gaussSeidel1D, xant
+    real(8) e1
+    integer(4) i, cont, orden
+
+    gaussSeidel1D = xini
+    orden = size(xini)
+    e1 = tol + 1
+    cont = 0
+    do while (e1 > tol)
+        xant = gaussSeidel1D
+        gaussSeidel1D(1) = (term_ind(1) - rd(1) * gaussSeidel1D(2)) / d(1)
+        do i = 2, orden - 1
+            gaussSeidel1D(i) = (term_ind(i) - ld(i) * gaussSeidel1D(i-1) - rd(i) * gaussSeidel1D(i+1)) / d(i)
+        end do
+        gaussSeidel1D(orden) = (term_ind(orden) - ld(orden) * gaussSeidel1D(orden-1)) / d(orden)
+        e1 = errorAbsolutoV(gaussSeidel1D, xant, vNormaM)
+        cont = cont + 1
+    end do
+    write(*, *) "Iteraciones: ", cont
+end function
+
 function gaussSeidel2D(d, ud, bd, ld, rd, term_ind, columnas, xini, tol)
     real(8), dimension(:), intent(in) :: d, ud, bd, ld, rd, term_ind, xini
     real(8), intent(in) :: tol
@@ -350,7 +374,7 @@ function gaussSeidel2D(d, ud, bd, ld, rd, term_ind, columnas, xini, tol)
     e1 = tol + 1
     cont = 0
     filas = orden / columnas
-    do while(e1 > tol)
+    do while (e1 > tol)
         xant = gaussSeidel2D
         do i = 1, orden
             gaussSeidel2D(i) = term_ind(i)

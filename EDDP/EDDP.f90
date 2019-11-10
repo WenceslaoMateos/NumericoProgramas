@@ -17,6 +17,13 @@ module EDDP
         procedure(discretizacionParabolicas), pointer, nopass :: calculoInterno, calculoIzquierda, calculoDerecha
     end type ProblemaParabolicas
 
+    type ParabolicasImplicito
+        real(8) t0, tf, dt, x0, xf, dx
+        integer(4) particionx, particiont
+        real(8), dimension(:), allocatable :: iniciales, u
+        procedure(ecuacionImplicito), pointer, nopass :: ecInterno, ecIzquierda, ecDerecha
+    end type ParabolicasImplicito
+
     abstract interface
         function discretizacionParabolicas(pp, i)
             import ProblemaParabolicas
@@ -24,6 +31,15 @@ module EDDP
             integer(4), intent(in) :: i
             real(8) discretizacionParabolicas
         end function
+    end interface
+
+    abstract interface
+        subroutine ecuacionImplicito(pi, i, d, ld, rd, term_ind)
+            import ParabolicasImplicito
+            type(ParabolicasImplicito), intent(inout) :: pi
+            integer(4), intent(in) :: i
+            real(8), dimension(:) :: d, ld, rd, term_ind
+        end subroutine
     end interface
     
     abstract interface
@@ -274,6 +290,32 @@ contains
         formularProblemaParabolicas = pp
     end function
 
+    function formularProblemaImplicito(x0, xf, particionx, t0, tf, particiont, &
+            iniciales, ecInterno, ecIzquierda, ecDerecha)
+        real(8), intent(in) :: x0, xf, t0, tf, iniciales(:)
+        integer(4), intent(in) :: particionx, particiont
+        procedure(ecuacionImplicito) ecInterno, ecIzquierda, ecDerecha
+        type(ParabolicasImplicito) pi, formularProblemaImplicito
+
+        pi%x0 = x0
+        pi%xf = xf
+        pi%particionx = particionx
+        pi%dx = (xf - x0) / particionx
+
+        pi%t0 = t0
+        pi%tf = tf
+        pi%particiont = particiont
+        pi%dt = (tf - t0) / particiont
+
+        pi%iniciales = iniciales
+
+        pi%ecInterno => ecInterno
+        pi%ecIzquierda => ecIzquierda
+        pi%ecDerecha => ecDerecha
+
+        formularProblemaImplicito = pi
+    end function
+
     subroutine explicito(pp, archivo)
         type(ProblemaParabolicas), intent(inout) :: pp
         character(len=*), intent(in) :: archivo
@@ -285,7 +327,7 @@ contains
         !escritura inicial en el archivo
         open(2, FILE=archivo)
         pp%dx = (pp%xf - pp%x0) / pp%particionx
-        x(1) =  0.
+        x(1) = 0.
         x(2) = pp%x0
         do i = 3, pp%particionx + 2
             x(i) = x(i - 1) + pp%dx
@@ -368,65 +410,40 @@ contains
         close(2)
     end subroutine implicitoThomas
 
-    subroutine implicito(iniciales, ci, cd, x0, xf, t0, tf, erre, particionx, particiont, archivo)
-        real(8), intent(in) :: t0, x0, xf, tf
-        type(frontera), intent(in) :: ci, cd
-        integer(4), intent(in) :: particionx, particiont
-        real(8), dimension(particionx - 1), intent(in) :: iniciales
-        real(8), dimension(particionx + 2) :: x
+    subroutine implicito(pi, archivo, tol)
+        type(ParabolicasImplicito), intent(inout) :: pi
         character(len=*), intent(in) :: archivo
-        procedure(funr) :: erre
-        real(8), dimension(size(iniciales) + 2, 1) :: uant, u
-        real(8), dimension(particionx - 1, particionx - 1) :: matriz
-        real(8), dimension(particionx - 1, 1) :: term_ind
-        real(8) t, r, dt, dx
+        real(8), dimension(pi%particionx + 2) :: x
+        real(8), dimension(size(pi%iniciales)) :: d, ld, rd, term_ind
+        real(8) t, tol
         integer(4) n, i
         
         !escitura inicial en el archivo
         open(2, FILE=archivo)
-        dx = (xf - x0) / particionx
-        x(1) =  0.
-        x(2) = x0
-        do i = 3, particionx + 2
-            x(i) = x(i-1) + dx
+        pi%dx = (pi%xf - pi%x0) / pi%particionx
+        x(1) = 0.
+        x(2) = pi%x0
+        do i = 3, pi%particionx + 2
+            x(i) = x(i - 1) + pi%dx
         end do
         write(2, *) x
         write(2, *)
 
-        n = size(iniciales) + 2
-        u(1, 1) = ci%valor
-        u(n, 1) = cd%valor
-        u(2:n-1 ,1) = iniciales
-        t = t0
-        write(2, *) t, u(:, 1)
+        n = size(pi%iniciales)
+        pi%u = pi%iniciales
+        t = pi%t0
+        write(2, *) t, pi%u
         
-        dt = (tf - t0) / particiont
-        r = erre(dx, dt)
-        matriz = 0.
-        !banda central
-        do i = 1, n-2
-            matriz(i, i) = 2 + 2 * r
-        end do
-        ! banda derecha
-        do i = 1, n-3
-            matriz(i, i+1) = -r
-        end do
-        ! banda izquierda
-        do i = 2, n-2
-            matriz(i, i-1) = -r
-        end do
-        do while(t <= tf)
-            t = t + dt
-            uant = u
-            term_ind = 0.
-            term_ind(1, 1) = r * ci%valor
-            term_ind(n-2, 1) = r * cd%valor
-            !terminos independientes
-            do i = 1, n-2
-                term_ind(i, 1) = term_ind(i, 1) + r * uant(i, 1) + (2 - 2 * r) * uant(i+1, 1) + r * uant(i+2, 1)
+        pi%dt = (pi%tf - pi%t0) / pi%particiont
+        do while(t <= pi%tf)
+            t = t + pi%dt
+            call pi%ecIzquierda(pi, 1, d, ld, rd, term_ind)
+            do i = 2, n - 1
+                call pi%ecInterno(pi, i, d, ld, rd, term_ind)
             end do
-            u(2:n-1, :) = gaussSeidel(matriz, term_ind, uant(2:n-1, :), 0.0001_8)
-            write(2, *) t, u(:, 1)
+            call pi%ecDerecha(pi, n, d, ld, rd, term_ind)
+            pi%u = gaussSeidel1D(d, ld, rd, term_ind, pi%u, tol)
+            write(2, *) t, pi%u
         end do
         close(2)
     end subroutine implicito
