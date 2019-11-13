@@ -157,4 +157,31 @@ contains
         call system('gnuplot -persist temporal.p')
         close(2, STATUS='DELETE')
     end subroutine plot
+
+    subroutine plotVarias(funciones, nombre, rango)
+        character(len=*), dimension(:), intent(in) :: funciones
+        character (LEN=*), intent(in) :: rango, nombre
+        optional rango
+        integer(4) i
+    
+        open(unit=2, file="temporal.p", access='SEQUENTIAL', status='REPLACE')
+        write(2, *) "set autoscale"
+        write(2, *) "unset log"
+        write(2, *) "unset label"
+        write(2, *) "set grid"
+        write(2, *) "set xtic auto"
+        write(2, *) "set ytic auto"
+        write(2, *) "set title '", nombre, "'"
+        write(2, *) "set xlabel 'x'"
+        write(2, *) "set ylabel 'y'"
+        write(2, "(7A)", advance="NO") "plot ", rango ," ", funciones(1) ," title '", funciones(1) ,"' with lines"
+        do i = 2, size(funciones)
+            write(2, *) ", \"
+            write(2, "(6A)", advance="NO") funciones(i) ," title '", funciones(i) ,"' with lines"
+        end do
+        write(2, *)
+        call system('gnuplot -persist temporal.p')
+        close(2, STATUS='DELETE')
+    end subroutine plotVarias
+    
 end module ENL
