@@ -67,15 +67,6 @@ contains
         derivadaNmasuno = sin(x)
     end function derivadaNmasuno
 
-    function calculaH(x)
-        real(8), dimension(0:) :: x
-        real(8), dimension(0:ubound(x, 1)-1) :: calculaH
-        integer(4) n
-
-        n = ubound(x, 1)
-        calculaH = x(1:n) - x(0:n-1)
-    end function calculaH
-
     subroutine graficarSplines(a, b, c, d, x, y, salto, nombre)
         real(8), dimension(0:), intent(in) :: a, b, c, d, x, y
         real(8), intent(in) :: salto

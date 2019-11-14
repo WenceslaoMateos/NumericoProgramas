@@ -207,6 +207,15 @@ contains
         end do
     end function equiespaciadoAscendente
 
+    function calculaH(x)
+        real(8), dimension(0:) :: x
+        real(8), dimension(0:ubound(x, 1)-1) :: calculaH
+        integer(4) n
+
+        n = ubound(x, 1)
+        calculaH = x(1:n) - x(0:n-1)
+    end function calculaH
+
     subroutine splinesCubicos(a, b, c, d, h)
         real(8), dimension(0:), intent(in) :: a, h
         real(8), dimension(0:), intent(out) :: b, c, d
